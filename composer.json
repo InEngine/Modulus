@@ -1,0 +1,19 @@
+{
+    "name": "inengine/modulus",
+    "description": "Module System for the InEngine Application System",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Inengine\\Modulus\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "James Johnson",
+            "email": "james.johnson@excellentingenuity.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
