@@ -32,7 +32,7 @@
                 "InEngine\\Modulus\\ServiceProvider"
             ],
             "aliases": {
-                "Modulus": "InEngine\\Modulus\\Facade"
+                "Modulus": "InEngine\\Modulus\\Facades\\Modulus"
             }
         }
     }
