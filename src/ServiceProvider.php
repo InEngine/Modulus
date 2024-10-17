@@ -1,5 +1,7 @@
 <?php
 
+namespace InEngine\Modulus;
+
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 
 
