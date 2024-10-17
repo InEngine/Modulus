@@ -25,5 +25,15 @@
     },
     "require": {
         "illuminate/support": "^11.28"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "InEngine\\Modulus\\ServiceProvider"
+            ],
+            "aliases": {
+                "Modulus": "InEngine\\Modulus\\Facade"
+            }
+        }
     }
 }
