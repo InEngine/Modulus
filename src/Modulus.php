@@ -2,4 +2,10 @@
 
 namespace InEngine\Modulus;
 
-class Modulus {}
+class Modulus {
+
+    public function getModuleName():string
+    {
+        return config('modulus.name');
+    }
+}
