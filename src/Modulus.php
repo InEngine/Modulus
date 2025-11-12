@@ -5,7 +5,7 @@ namespace InEngine\Modulus;
 class Modulus
 {
     /**
-     * GetModuleName()
+     * @public GetModuleName()
      * @return string
      *
      * Get the name of the Module
