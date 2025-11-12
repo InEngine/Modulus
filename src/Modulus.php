@@ -6,6 +6,7 @@ class Modulus
 {
     /**
      * @public GetModuleName()
+     *
      * @return string
      *
      * Get the name of the Module

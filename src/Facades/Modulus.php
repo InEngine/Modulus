@@ -11,6 +11,7 @@ class Modulus extends Facade
 {
     /**
      * @static @public GetModuleName()
+     *
      * @return string
      *
      * Get the name of the Module
