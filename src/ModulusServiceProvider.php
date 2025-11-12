@@ -2,9 +2,9 @@
 
 namespace InEngine\Modulus;
 
+use InEngine\Modulus\Commands\ModulusCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use InEngine\Modulus\Commands\ModulusCommand;
 
 class ModulusServiceProvider extends PackageServiceProvider
 {
