@@ -1,0 +1,14 @@
+- From the ModuleManifest be able to list all installed modules
+- Extend ModuleManifest to be all Activated modules
+- From ActiveModulesManifest list all active modules
+- Activate via command any module
+- Deactivate via command any module
+- Activate via web interface any module
+- Deactivate via web interface any module
+- See all activated modules in laravel package discovery
+- Setup a module skeleton package
+- Require dev for Modulus the TestModule Package
+
+Latter
+- List modules able to be installed
+- Install modules from repos, packagist, private packagist
