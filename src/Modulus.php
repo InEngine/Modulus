@@ -6,6 +6,7 @@ class Modulus
 {
     /**
      * GetModuleName()
+     *
      * @return string
      *
      * Get the name of the Module
