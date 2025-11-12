@@ -9,7 +9,13 @@ use Illuminate\Support\Facades\Facade;
  */
 class Modulus extends Facade
 {
-    protected static function getFacadeAccessor(): string
+    /**
+     * @static @public GetModuleName()
+     * @return string
+     *
+     * Get the name of the Module
+     */
+    public static function getFacadeAccessor(): string
     {
         return \InEngine\Modulus\Modulus::class;
     }
