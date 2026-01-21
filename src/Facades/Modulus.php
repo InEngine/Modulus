@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Facade;
 class Modulus extends Facade
 {
     /**
-     * @static @public GetModuleName()
-     * @return string
+     * Get the Accessor for the Module
      *
-     * Get the name of the Module
+     * @static @public getFacadeAccessor()
+     * @return string
      */
     public static function getFacadeAccessor(): string
     {
