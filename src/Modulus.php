@@ -26,6 +26,7 @@ class Modulus
      * Get the name of the Module
      *
      * @public GetModuleName()
+     *
      * @return string
      */
     public function getModuleName(): string
