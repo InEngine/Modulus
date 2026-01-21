@@ -4,8 +4,26 @@ use Illuminate\Support\Collection;
 use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\Modulus;
 
-beforeEach(function () {
+$configFixturesPath = realpath(getcwd() . '/tests/fixtures');
+$balancedConfigFileName = '/modules_balanced.php';
+$emptyConfigFileName = '/modules_empty.php';
+$stubConfigFile = realpath(getcwd() . '/stubs/modules.stub.php');
+$configFileName = '/modules.php';
+$configPath =  realpath(getcwd() . '/vendor/orchestra/testbench-core/laravel/config');
+
+/**
+ * Run before each test
+ */
+beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $configFixturesPath, $balancedConfigFileName) {
+    $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
     $this->modulus = new Modulus();
+});
+
+/**
+ * Run after each test
+ */
+afterEach(function () use($configPath, $configFileName, $stubConfigFile,$configFixturesPath, $balancedConfigFileName) {
+    $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
 });
 
 it('the class object has a module name', function () {
@@ -62,7 +80,7 @@ it('the class object returns an collection of modules listed in the modules conf
         ->toBeInstanceOf(Collection::class);
 });
 
-it('the class object returns an collection of modules the same as listed in the modules configuration file', function () {
+it('the class object returns a collection of modules the same as listed in the modules configuration file', function () {
     expect($this->modulus->getAllModules()->toArray())
         ->toEqual(config('modules'));
 });
