@@ -5,6 +5,7 @@ namespace InEngine\Modulus\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use InEngine\Modulus\ModulusServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Illuminate\Support\Facades\Artisan;
 
 class TestCase extends Orchestra
 {
@@ -15,6 +16,9 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'InEngine\\Modulus\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        $this->artisan('vendor:publish', ['--provider' => ModulusServiceProvider::class]);
+
     }
 
     protected function getPackageProviders($app)
@@ -33,5 +37,32 @@ class TestCase extends Orchestra
             (include $migration->getRealPath())->up();
          }
          */
+    }
+
+    public function copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
+
+        if(file_exists($configPath . $configFileName)) {
+            unlink($configPath . $configFileName);
+        }
+        copy($configFixturesPath . $balancedConfigFileName, $configPath . $configFileName);
+        Artisan::call('config:clear');
+    }
+
+    public function copyEmptyConfigFile($configPath, $configFileName, $configFixturesPath, $emptyConfigFileName) {
+        if(file_exists($configPath . $configFileName)) {
+            unlink($configPath . $configFileName);
+        }
+        copy($configFixturesPath . $emptyConfigFileName, $configPath . $configFileName);
+
+    }
+
+    public function resetConfig($configPath, $configFileName, $stubConfigFile)
+    {
+        if(file_exists($configPath . $configFileName)) {
+            unlink($configPath . $configFileName);
+        }
+        copy($stubConfigFile, $configPath . $configFileName);
+
+
     }
 }
