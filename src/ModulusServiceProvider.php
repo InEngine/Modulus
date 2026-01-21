@@ -17,7 +17,7 @@ class ModulusServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('modulus')
-            ->hasConfigFile()
+            ->hasConfigFile(['modulus', 'modules'])
             ->hasViews()
             ->hasMigration('create_modulus_table')
             ->hasCommand(ModulusCommand::class);
