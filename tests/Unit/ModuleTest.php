@@ -4,25 +4,25 @@ use Illuminate\Support\Collection;
 use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\Modulus;
 
-$configFixturesPath = realpath(getcwd() . '/tests/fixtures');
+$configFixturesPath = realpath(getcwd().'/tests/fixtures');
 $balancedConfigFileName = '/modules_balanced.php';
 $emptyConfigFileName = '/modules_empty.php';
-$stubConfigFile = realpath(getcwd() . '/stubs/modules.stub.php');
+$stubConfigFile = realpath(getcwd().'/stubs/modules.stub.php');
 $configFileName = '/modules.php';
-$configPath =  realpath(getcwd() . '/vendor/orchestra/testbench-core/laravel/config');
+$configPath = realpath(getcwd().'/vendor/orchestra/testbench-core/laravel/config');
 
 /**
  * Run before each test
  */
-beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $configFixturesPath, $balancedConfigFileName) {
+beforeEach(function () use ($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
-    $this->modulus = new Modulus();
+    $this->modulus = new Modulus;
 });
 
 /**
  * Run after each test
  */
-afterEach(function () use($configPath, $configFileName, $stubConfigFile,$configFixturesPath, $balancedConfigFileName) {
+afterEach(function () use ($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
 });
 
