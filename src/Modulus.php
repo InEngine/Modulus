@@ -3,8 +3,8 @@
 namespace InEngine\Modulus;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 
 /**
  * The class handles:
@@ -16,29 +16,22 @@ use Illuminate\Support\Facades\Artisan;
  */
 class Modulus
 {
-    /**
-     * @var string $configFile
-     */
     protected string $configFile = 'modules';
-
 
     /**
      * Get the name of the Module
      *
      * @public GetModuleName()
-     *
-     * @return string
      */
     public function getModuleName(): string
     {
-        return "Modulus";
+        return 'Modulus';
     }
 
     /**
      * Get the Fully Qualified Name of the Module
      *
      * @public getModuleFQN
-     * @return string
      */
     public function getModuleFQN(): string
     {
@@ -49,7 +42,6 @@ class Modulus
      * Get the Namespace of the Module
      *
      * @public getModuleNamespace
-     * @return string
      */
     public function getModuleNamespace(): string
     {
@@ -60,14 +52,15 @@ class Modulus
      * Get a Collection or Array of all Modules, Active and InActive
      *
      * @public getAllModules
-     * @param bool $asArray (optional) Return an Array instead of a Collection
-     * @return Collection|array
+     *
+     * @param  bool  $asArray  (optional) Return an Array instead of a Collection
      */
-    public function getAllModules(bool $asArray = false): Collection | array
+    public function getAllModules(bool $asArray = false): Collection|array
     {
-        if($asArray){
+        if ($asArray) {
             return config($this->configFile);
         }
+
         return collect(config($this->configFile));
     }
 
@@ -75,15 +68,16 @@ class Modulus
      * Get a Collection or Array of all Active Modules
      *
      * @public getActiveModules
-     * @param bool $asArray (optional) Return an Array instead of a Collection
-     * @return Collection|array
+     *
+     * @param  bool  $asArray  (optional) Return an Array instead of a Collection
      */
-    public function getActiveModules(bool $asArray = false): Collection | array
+    public function getActiveModules(bool $asArray = false): Collection|array
     {
-        if($asArray){
-            return config($this->configFile . '.active');
+        if ($asArray) {
+            return config($this->configFile.'.active');
         }
-        return collect(config($this->configFile . '.active'));
+
+        return collect(config($this->configFile.'.active'));
 
     }
 
@@ -91,32 +85,32 @@ class Modulus
      * Get a Collection or Array of all InActive Modules
      *
      * @public getInActiveModules
-     * @param bool $asArray (optional) Return an Array instead of a Collection
-     * @return Collection|array
+     *
+     * @param  bool  $asArray  (optional) Return an Array instead of a Collection
      */
-    public function getInActiveModules(bool $asArray = false): Collection | array
+    public function getInActiveModules(bool $asArray = false): Collection|array
     {
-        if($asArray){
-            return config($this->configFile . '.inactive');
+        if ($asArray) {
+            return config($this->configFile.'.inactive');
         }
-        return collect(config($this->configFile . '.inactive'));
+
+        return collect(config($this->configFile.'.inactive'));
 
     }
 
-
-    public function activateModule(string $module, $returnModules = false, $returnModulesAsArray = false): null | array | Collection
+    public function activateModule(string $module, $returnModules = false, $returnModulesAsArray = false): null|array|Collection
     {
         $active = $this->getActiveModules(true);
         $inactive = $this->getInActiveModules();
         $moduleData = null;
 
-        //find the module in the inactive list
+        // find the module in the inactive list
         if ($inactive->has($module)) {
             $moduleData = $inactive[$module];
             $inactive->forget($module);
             $active[$module] = $moduleData;
         } else {
-            throw new \Exception("Module not listed in InActive Modules list, please install or deactivate the module before trying to activate it", E_NOTICE);
+            throw new \Exception('Module not listed in InActive Modules list, please install or deactivate the module before trying to activate it', E_NOTICE);
         }
 
         try {
@@ -135,22 +129,23 @@ class Modulus
         if ($returnModulesAsArray) {
             return $this->getActiveModules(true);
         }
+
         return null;
     }
 
-    public function deactivateModule(string $module, $returnModules = false, $returnModulesAsArray = false): null | array | Collection
+    public function deactivateModule(string $module, $returnModules = false, $returnModulesAsArray = false): null|array|Collection
     {
         $active = $this->getActiveModules();
         $inactive = $this->getInActiveModules(true);
         $moduleData = null;
 
-        //find the module in the inactive list
+        // find the module in the inactive list
         if ($active->has($module)) {
             $moduleData = $active[$module];
             $active->forget($module);
             $inactive[$module] = $moduleData;
         } else {
-            throw new \Exception("Module not listed in Active Modules list, please install or activate the module before trying to activate it", E_NOTICE);
+            throw new \Exception('Module not listed in Active Modules list, please install or activate the module before trying to activate it', E_NOTICE);
         }
 
         try {
@@ -169,6 +164,7 @@ class Modulus
         if ($returnModulesAsArray) {
             return $this->getInActiveModules(true);
         }
+
         return null;
     }
 
@@ -186,15 +182,15 @@ class Modulus
 
         $content .= $activeList;
 
-        $content .= ',' . PHP_EOL;
+        $content .= ','.PHP_EOL;
 
         $content .= $inactiveList;
 
         $content .= $footer;
 
         try {
-            if(File::exists(config_path($this->configFile . '.php'))) {
-                File::put(config_path($this->configFile . '.php'), $content);
+            if (File::exists(config_path($this->configFile.'.php'))) {
+                File::put(config_path($this->configFile.'.php'), $content);
             }
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage(), $e->getCode(), $e);
@@ -208,27 +204,23 @@ class Modulus
         Artisan::call('config:clear');
     }
 
-
-    protected function getModulesConfigFileHeader():string
+    protected function getModulesConfigFileHeader(): string
     {
-        return "<?php" . PHP_EOL . "return [" . PHP_EOL;
+        return '<?php'.PHP_EOL.'return ['.PHP_EOL;
     }
 
-    protected function getModulesConfigFileFooter():string
+    protected function getModulesConfigFileFooter(): string
     {
-        return "];" . PHP_EOL . PHP_EOL;
+        return '];'.PHP_EOL.PHP_EOL;
     }
 
     protected function getModulesConfigActiveArray(array $active): string
     {
-        return "\t" . "'active' => " . "\t\t" . str_replace(array('array', '(', ')'), array("\t\t\t", '[', ']'), var_export($active, true));
+        return "\t"."'active' => "."\t\t".str_replace(['array', '(', ')'], ["\t\t\t", '[', ']'], var_export($active, true));
     }
 
     protected function getModulesConfigInActiveArray(array $inactive): string
     {
-        return "\t" ."'inactive' => " . "\t\t" . str_replace(array('array', '(', ')'), array("\t\t\t", '[', ']'), var_export($inactive, true)) . PHP_EOL;
+        return "\t"."'inactive' => "."\t\t".str_replace(['array', '(', ')'], ["\t\t\t", '[', ']'], var_export($inactive, true)).PHP_EOL;
     }
-
-
-
 }

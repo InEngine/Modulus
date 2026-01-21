@@ -5,7 +5,7 @@ use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\Modulus;
 
 beforeEach(function () {
-    $this->modulus = new Modulus();
+    $this->modulus = new Modulus;
 });
 
 it('the class object has a module name', function () {

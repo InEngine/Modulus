@@ -13,7 +13,6 @@ class Modulus extends Facade
      * Get the Accessor for the Module
      *
      * @static @public getFacadeAccessor()
-     * @return string
      */
     public static function getFacadeAccessor(): string
     {
