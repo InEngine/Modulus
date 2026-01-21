@@ -39,6 +39,16 @@ class TestCase extends Orchestra
          */
     }
 
+    /**
+     * A helper method to copy the balanced config file from fixtures to the testbench config dir for
+     * running tests
+     *
+     * @param $configPath
+     * @param $configFileName
+     * @param $configFixturesPath
+     * @param $balancedConfigFileName
+     * @return void
+     */
     public function copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
 
         if(file_exists($configPath . $configFileName)) {
@@ -48,14 +58,33 @@ class TestCase extends Orchestra
         Artisan::call('config:clear');
     }
 
+    /*
+     * A helper method to copy the empty config file from fixtures to the testbench config dir for
+     * running tests
+     *
+     * @param $configPath
+     * @param $configFileName
+     * @param $configFixturesPath
+     * @param $balancedConfigFileName
+     * @return void
+     */
     public function copyEmptyConfigFile($configPath, $configFileName, $configFixturesPath, $emptyConfigFileName) {
         if(file_exists($configPath . $configFileName)) {
             unlink($configPath . $configFileName);
         }
         copy($configFixturesPath . $emptyConfigFileName, $configPath . $configFileName);
-
+        Artisan::call('config:clear');
     }
 
+    /**
+     * A helper method to reset the config file and copy it to the testbench config dir
+     *  after or before running tests
+     *
+     * @param $configPath
+     * @param $configFileName
+     * @param $stubConfigFile
+     * @return void
+     */
     public function resetConfig($configPath, $configFileName, $stubConfigFile)
     {
         if(file_exists($configPath . $configFileName)) {
