@@ -16,6 +16,9 @@ $configPath =  realpath(getcwd() . '/vendor/orchestra/testbench-core/laravel/con
 
 //TODO: figure out a way to reliably place the balanced config file in the test config directory before each test
 //TODO: fix pushing the version of the module.php config file
+/**
+ * Run before each test
+ */
 beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
     $this->modulus = new Modulus();
@@ -23,6 +26,9 @@ beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $confi
     //$this->resetConfig($configPath, $configFileName, $stubConfigFile);
 });
 
+/**
+ * Run after each test
+ */
 afterEach(function () use($configPath, $configFileName, $stubConfigFile,$configFixturesPath, $balancedConfigFileName) {
     //$this->resetConfig($configPath, $configFileName, $stubConfigFile);
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);

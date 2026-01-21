@@ -14,7 +14,9 @@ $configFileName = '/modules.php';
 $configPath =  realpath(getcwd() . '/vendor/orchestra/testbench-core/laravel/config');
 
 
-
+/**
+ * run before each test
+ */
 //TODO: fix pushing the version of the module.php config file
 beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
@@ -23,6 +25,9 @@ beforeEach(function () use($configPath, $configFileName, $stubConfigFile, $confi
     //$this->resetConfig($configPath, $configFileName, $stubConfigFile);
 });
 
+/**
+ * run after each test
+ */
 afterEach(function () use($configPath, $configFileName, $stubConfigFile,$configFixturesPath, $balancedConfigFileName) {
     //$this->resetConfig($configPath, $configFileName, $stubConfigFile);
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
