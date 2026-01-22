@@ -35,9 +35,10 @@ it('the class object deactivates a module listed as activated', function () {
     expect(true)->toBeTrue();
     // dd(config('modules'));
     // dd($this->modulus->activateModule('Course', false, true));
-//    expect($this->modulus->deactivateModule('Person', false, true))
-//        ->toEqual(config('modules.inactive'))
-//        ->not->toBeEmpty();
+
+    //    expect($this->modulus->deactivateModule('Person', false, true))
+    //        ->toEqual(config('modules.inactive'))
+    //        ->not->toBeEmpty();
     dump(getcwd());
     // dd($this->modulus->getInActiveModules());
 });
