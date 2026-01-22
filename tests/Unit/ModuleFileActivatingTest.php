@@ -18,7 +18,7 @@ $configPath = realpath(getcwd().'/vendor/orchestra/testbench-core/laravel/config
 beforeEach(function () use ($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
     $this->modulus = new Modulus;
-    $this->withoutExceptionHandling();
+    //$this->withoutExceptionHandling();
     // $this->resetConfig($configPath, $configFileName, $stubConfigFile);
 });
 
