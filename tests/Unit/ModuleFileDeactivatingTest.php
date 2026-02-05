@@ -14,7 +14,7 @@ $configPath = realpath(getcwd().'/vendor/orchestra/testbench-core/laravel/config
  * run before each test
  */
 // TODO: fix pushing the version of the module.php config file
-//TODO: still need to fix writing to and testing of modules.php config file
+// TODO: still need to fix writing to and testing of modules.php config file
 // ? maybe a different approach
 beforeEach(function () use ($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName) {
     $this->copyBalancedConfigFile($configPath, $configFileName, $configFixturesPath, $balancedConfigFileName);
