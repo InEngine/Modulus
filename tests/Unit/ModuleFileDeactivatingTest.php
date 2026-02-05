@@ -34,13 +34,13 @@ afterEach(function () use ($configPath, $configFileName, $configFixturesPath, $b
 });
 
 it('the class object deactivates a module listed as activated', function () {
-    //expect(true)->toBeTrue();
+    // expect(true)->toBeTrue();
     // dd(config('modules'));
     // dd($this->modulus->activateModule('Course', false, true));
 
-        expect($this->modulus->deactivateModule('Person', false, true))
-            ->toEqual(config('modules.inactive'))
-            ->not->toBeEmpty();
-    //dump(realpath(getcwd().'/vendor/orchestra/testbench-core/laravel/config'));
+    expect($this->modulus->deactivateModule('Person', false, true))
+        ->toEqual(config('modules.inactive'))
+        ->not->toBeEmpty();
+    // dump(realpath(getcwd().'/vendor/orchestra/testbench-core/laravel/config'));
     // dd($this->modulus->getInActiveModules());
 });

@@ -33,11 +33,11 @@ afterEach(function () use ($configPath, $configFileName, $configFixturesPath, $b
 });
 
 it('the class object activates a module listed as deactivated', function () {
-    //expect(true)->toBeTrue();
+    // expect(true)->toBeTrue();
     // dd(config('modules'));
     // dd($this->modulus->activateModule('Course', false, true));
-        expect($this->modulus->activateModule('Course', false, true))
-            ->toEqual(config('modules.active'))
-            ->not->toBeEmpty();
+    expect($this->modulus->activateModule('Course', false, true))
+        ->toEqual(config('modules.active'))
+        ->not->toBeEmpty();
     // dd($this->modulus->getActiveModules());
 });
