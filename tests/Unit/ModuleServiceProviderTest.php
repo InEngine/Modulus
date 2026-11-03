@@ -3,79 +3,157 @@
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\ModuleServiceProvider;
+use InEngine\Modulus\State\FileModulusStateStore;
 use Spatie\LaravelPackageTools\Package;
 
-it('registers with Modulus and skips boot when disabled', function () {
-    $provider = new class(app()) extends ModuleServiceProvider
+function makeHandshakeProvider(string $packageName = 'inengine/alert', ?string $version = null): ModuleServiceProvider
+{
+    return new class(app(), $packageName, $version) extends ModuleServiceProvider
     {
-        public bool $bootedPackage = false;
+        public bool $packageBootedFlag = false;
+
+        public bool $bootingPackageFlag = false;
+
+        public function __construct($app, protected string $name, protected ?string $version)
+        {
+            parent::__construct($app);
+        }
 
         public function configurePackage(Package $package): void
         {
-            $package->name('alert-test');
+            $package->name(str_replace('/', '-', $this->name));
         }
 
         protected function modulusPackageName(): string
         {
-            return 'inengine/alert';
+            return $this->name;
         }
 
-        public function boot(): void
+        protected function modulusPackageVersion(): ?string
         {
-            if (! $this->shouldBootModule()) {
-                return;
-            }
+            return $this->version;
+        }
 
-            $this->bootedPackage = true;
+        public function bootingPackage(): void
+        {
+            $this->bootingPackageFlag = true;
+        }
+
+        public function packageBooted(): void
+        {
+            $this->packageBootedFlag = true;
         }
     };
+}
 
-    config()->set('modulus.state_path', sys_get_temp_dir().'/modulus-msp-'.uniqid('', true).'.json');
+function prepareModulusStatePath(): string
+{
+    $path = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-handshake-'.uniqid('', true).'.json';
+    config()->set('modulus.state_path', $path);
+    config()->set('modulus.state_fsync', false);
+    config()->set('modulus.store', FileModulusStateStore::class);
     app()->forgetInstance(ModuleRepository::class);
     app()->forgetInstance(ModulusStateStore::class);
 
-    $provider->register();
+    return $path;
+}
 
-    expect(app(ModuleRepository::class)->get('inengine/alert'))->not->toBeNull()
-        ->and(app(ModuleRepository::class)->isEnabled('inengine/alert'))->toBeFalse();
+function cleanupModulusStatePath(string $path): void
+{
+    if (is_file($path)) {
+        unlink($path);
+    }
+}
 
-    $provider->boot();
-    expect($provider->bootedPackage)->toBeFalse();
+it('registers with Modulus on packageRegistered even when disabled', function () {
+    $path = prepareModulusStatePath();
+    $provider = makeHandshakeProvider('inengine/alert', '1.2.3');
 
-    app(ModuleRepository::class)->enable('inengine/alert');
-    $provider->boot();
-    expect($provider->bootedPackage)->toBeTrue();
+    try {
+        $provider->register();
+
+        $repo = app(ModuleRepository::class);
+
+        expect($provider->modulusIsPresent())->toBeTrue()
+            ->and($repo->get('inengine/alert'))->toEqual([
+                'enabled' => false,
+                'version' => '1.2.3',
+            ])
+            ->and($provider->shouldBootModule())->toBeFalse()
+            ->and($provider->isEnabledInModulus())->toBeFalse();
+    } finally {
+        cleanupModulusStatePath($path);
+    }
 });
 
-it('boots standalone when ModuleRepository is not bound', function () {
-    $provider = new class(app()) extends ModuleServiceProvider
-    {
-        public bool $bootedPackage = false;
+it('skips Spatie boot hooks when disabled (defense in depth)', function () {
+    $path = prepareModulusStatePath();
+    $provider = makeHandshakeProvider();
 
-        public function configurePackage(Package $package): void
-        {
-            $package->name('alert-standalone');
-        }
+    try {
+        $provider->register();
+        $provider->boot();
 
-        protected function modulusPackageName(): string
-        {
-            return 'inengine/alert';
-        }
+        expect($provider->bootingPackageFlag)->toBeFalse()
+            ->and($provider->packageBootedFlag)->toBeFalse();
+    } finally {
+        cleanupModulusStatePath($path);
+    }
+});
 
-        public function boot(): void
-        {
-            if (! $this->shouldBootModule()) {
-                return;
-            }
+it('runs Spatie boot hooks when enabled in Modulus', function () {
+    $path = prepareModulusStatePath();
+    $provider = makeHandshakeProvider();
 
-            $this->bootedPackage = true;
-        }
-    };
+    try {
+        $provider->register();
+        app(ModuleRepository::class)->enable('inengine/alert');
+
+        expect($provider->shouldBootModule())->toBeTrue()
+            ->and($provider->isEnabledInModulus())->toBeTrue();
+
+        $provider->boot();
+
+        expect($provider->bootingPackageFlag)->toBeTrue()
+            ->and($provider->packageBootedFlag)->toBeTrue();
+    } finally {
+        cleanupModulusStatePath($path);
+    }
+});
+
+it('boots fully standalone when ModuleRepository is not bound', function () {
+    $provider = makeHandshakeProvider('inengine/calendar');
 
     app()->offsetUnset(ModuleRepository::class);
 
-    expect($provider->shouldBootModule())->toBeTrue();
+    expect($provider->modulusIsPresent())->toBeFalse()
+        ->and($provider->shouldBootModule())->toBeTrue()
+        ->and($provider->isEnabledInModulus())->toBeFalse();
 
+    $provider->register();
     $provider->boot();
-    expect($provider->bootedPackage)->toBeTrue();
+
+    expect($provider->bootingPackageFlag)->toBeTrue()
+        ->and($provider->packageBootedFlag)->toBeTrue();
+});
+
+it('does not register with Modulus when the runtime is absent', function () {
+    $path = prepareModulusStatePath();
+
+    try {
+        // Bind store path then remove repository so handshake is standalone.
+        app()->make(ModulusStateStore::class);
+        app()->offsetUnset(ModuleRepository::class);
+
+        $provider = makeHandshakeProvider('inengine/table-ui', '9.0.0');
+        $provider->register();
+
+        // Re-bind repository to inspect state file — package must not have been registered.
+        app()->forgetInstance(ModulusStateStore::class);
+        $store = app(ModulusStateStore::class);
+
+        expect($store->get('inengine/table-ui'))->toBeNull();
+    } finally {
+        cleanupModulusStatePath($path);
+    }
 });

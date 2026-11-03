@@ -1,0 +1,36 @@
+---
+description: Naming and authoring guidelines for Modulus extensions and feature modules
+alwaysApply: true
+---
+
+# Modulus packages — naming and module guidelines
+
+## Runtime vs extensions vs feature modules
+
+| Kind | Composer name | Purpose |
+|------|---------------|---------|
+| Runtime | `inengine/modulus` | Enable/disable, state, PackageManifest filter, handshake, lifecycle CLI |
+| Extensions | `inengine/modulus-{role}` | Optional add-ons — **not** feature product modules |
+| Feature modules | `inengine/{feature}` | Product capabilities (Alert, Calendar, …) from `InEngine/module-skeleton` |
+
+### Locked extension names
+
+- `inengine/modulus-composer` — Composer require/remove/update + Composer hooks (not core)
+- `inengine/modulus-marketplace` — browse/search; uses composer client for install
+- `inengine/modulus-ui` — operator UI
+- `inengine/modulus-inspect` — capability catalog / compat
+
+Do **not** put Composer hooks, marketplace, or operator UI into `inengine/modulus` core.
+
+## Feature module guidelines
+
+1. Name packages `inengine/{feature}` — never `inengine/modulus-*`.
+2. Scaffold from `InEngine/module-skeleton` (Spatie-based).
+3. Extend `ModuleServiceProvider`; implement `modulusPackageName()` (optional `modulusPackageVersion()`). Registration happens in `packageRegistered`; Spatie `boot` / `packageBooted` run only when enabled; standalone full boot if Modulus absent.
+4. Use only `extra.laravel.providers` for Laravel discovery.
+5. Install ≠ enable; default disabled until `modulus:enable`.
+6. Do not shell out to Composer to install sibling modules — that is `modulus-composer` / marketplace.
+7. Ship capability descriptor stubs for `modulus-inspect`.
+8. SemVer + Pint + Pest + PHPStan; CLI/API first; non-destructive disable/uninstall.
+
+Canonical detail: Documentation `Plan and Design.md` (extensions + “Guidelines for Modulus-compatible feature modules”).

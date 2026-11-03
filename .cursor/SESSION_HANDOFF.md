@@ -19,11 +19,31 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Step 4b skeleton started (parallel)
+
+- **Branch:** `feat/modulus-state-store` (Step 4 uncommitted polish still local)
+- **Done:** `InEngine/module-skeleton` live — https://github.com/InEngine/module-skeleton — extends `ModuleServiceProvider`, capability stub, path require to this package.
+- **Next:** Commit Step 4 handshake here; keep reviewing while skeleton iterates.
+- **Open questions:** None.
+
+### 2026-11-03 — Step 4 handshake
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** Hardened `ModuleServiceProvider`: `packageRegistered` → register; `boot()` skips Spatie hooks unless enabled; standalone when Modulus absent; version hook; Pest (register while disabled, skip boot, enable then boot, standalone, no-register when absent). Suite **50 passed**.
+- **Next:** Commit Step 4; Step 5 Core require Modulus.
+- **Open questions:** None.
+
+### 2026-11-03 — Extension naming locked
+
+- **Done (docs):** `inengine/modulus-{role}` naming + module guidelines rule.
+- **Next:** (see newer entry)
+- **Open questions:** None on naming unless Packagist conflict at publish.
+
 ### 2026-11-03 — Step 1a test gaps closed
 
 - **Branch:** `feat/modulus-state-store`
-- **Done:** Step 1a documented; Pest for installer rebind, discovery syncer forgetInstance, enable/disable→filtered providers, deny `forget`, register version bump. Suite **47 passed**.
-- **Next:** Commit Step 1 + 1a; Step 4 handshake polish.
+- **Done:** Step 1 + 1a committed (`2cbb102`). Suite **47 passed**.
+- **Next:** Step 4 handshake polish.
 - **Open questions:** None.
 
 ### 2026-11-03 — Step 1 complete + old API cleanup
