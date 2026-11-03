@@ -5,7 +5,8 @@ namespace InEngine\Modulus\Contracts;
 /**
  * Durable source of truth for which Composer module packages are enabled.
  *
- * Implementations must persist with an atomic write (temp file + rename).
+ * The default implementation is a flat JSON file store. Hosts may bind any
+ * other implementation via `config('modulus.store')` or the container.
  * Unknown packages are treated as disabled until registered.
  *
  * @phpstan-type ModuleState array{enabled: bool, version: string|null}

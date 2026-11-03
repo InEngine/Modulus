@@ -25,15 +25,47 @@ class ModulusServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Bind the file-backed module state store before the package boots.
+     * Bind the configured module state store before the package boots.
+     *
+     * Defaults to {@see FileModulusStateStore}. Hosts may set `modulus.store`
+     * to any class that implements {@see ModulusStateStore}.
      */
     public function packageRegistered(): void
     {
-        $this->app->singleton(ModulusStateStore::class, function ($app): FileModulusStateStore {
-            /** @var string $path */
-            $path = $app['config']->get('modulus.state_path', storage_path('modulus/modules.json'));
+        $this->app->singleton(ModulusStateStore::class, function ($app): ModulusStateStore {
+            $storeClass = $app['config']->get('modulus.store', FileModulusStateStore::class);
 
-            return new FileModulusStateStore($path);
+            if (! is_string($storeClass) || $storeClass === '' || ! class_exists($storeClass)) {
+                throw new \InvalidArgumentException(
+                    'Config [modulus.store] must be a concrete class name implementing '.ModulusStateStore::class.'.'
+                );
+            }
+
+            if (! is_a($storeClass, ModulusStateStore::class, true)) {
+                throw new \InvalidArgumentException(
+                    "Config [modulus.store] class [{$storeClass}] must implement ".ModulusStateStore::class.'.'
+                );
+            }
+
+            if ($storeClass === FileModulusStateStore::class) {
+                $path = $app['config']->get('modulus.state_path', storage_path('modulus/modules.json'));
+
+                if (! is_string($path) || $path === '') {
+                    throw new \InvalidArgumentException('Config [modulus.state_path] must be a non-empty string path.');
+                }
+
+                return new FileModulusStateStore($path);
+            }
+
+            $store = $app->make($storeClass);
+
+            if (! $store instanceof ModulusStateStore) {
+                throw new \InvalidArgumentException(
+                    'Resolved [modulus.store] instance must implement '.ModulusStateStore::class.'.'
+                );
+            }
+
+            return $store;
         });
     }
 }

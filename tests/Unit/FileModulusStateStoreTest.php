@@ -165,15 +165,14 @@ it('treats an empty json object as an empty module map', function () {
     }
 });
 
-it('resolves the file store from the container using config state_path', function () {
+it('resolves the default file store from the container using config', function () {
     [$directory, $path] = modulusStateStoreFixture();
 
     try {
+        config()->set('modulus.store', FileModulusStateStore::class);
         config()->set('modulus.state_path', $path);
 
-        // Re-bind so the singleton picks up the test path.
         app()->forgetInstance(ModulusStateStore::class);
-        app()->singleton(ModulusStateStore::class, fn () => new FileModulusStateStore($path));
 
         $resolved = app(ModulusStateStore::class);
 
@@ -190,3 +189,67 @@ it('resolves the file store from the container using config state_path', functio
         modulusStateStoreCleanup($directory, $path);
     }
 });
+
+it('resolves a custom store class from modulus.store config', function () {
+    $custom = new class implements ModulusStateStore
+    {
+        /** @var array<string, array{enabled: bool, version: string|null}> */
+        private array $modules = [];
+
+        public function all(): array
+        {
+            return $this->modules;
+        }
+
+        public function get(string $package): ?array
+        {
+            return $this->modules[$package] ?? null;
+        }
+
+        public function put(string $package, array $data): void
+        {
+            $this->modules[$package] = [
+                'enabled' => (bool) ($data['enabled'] ?? false),
+                'version' => is_string($data['version'] ?? null) ? $data['version'] : null,
+            ];
+        }
+
+        public function isEnabled(string $package): bool
+        {
+            return ($this->modules[$package]['enabled'] ?? false) === true;
+        }
+
+        public function setEnabled(string $package, bool $enabled): void
+        {
+            $entry = $this->get($package) ?? ['enabled' => false, 'version' => null];
+            $entry['enabled'] = $enabled;
+            $this->put($package, $entry);
+        }
+
+        public function remove(string $package): void
+        {
+            unset($this->modules[$package]);
+        }
+    };
+
+    $customClass = $custom::class;
+
+    app()->instance($customClass, $custom);
+    config()->set('modulus.store', $customClass);
+    app()->forgetInstance(ModulusStateStore::class);
+
+    $resolved = app(ModulusStateStore::class);
+
+    expect($resolved)->toBe($custom);
+
+    $resolved->setEnabled('inengine/alert', true);
+
+    expect($resolved->isEnabled('inengine/alert'))->toBeTrue();
+});
+
+it('rejects a modulus.store class that does not implement the contract', function () {
+    config()->set('modulus.store', stdClass::class);
+    app()->forgetInstance(ModulusStateStore::class);
+
+    app(ModulusStateStore::class);
+})->throws(InvalidArgumentException::class);
