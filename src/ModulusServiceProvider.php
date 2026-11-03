@@ -5,6 +5,7 @@ namespace InEngine\Modulus;
 use InEngine\Modulus\Commands\ModulusCommand;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\State\FileModulusStateStore;
+use InEngine\Modulus\State\FileModulusStateStoreFactory;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -48,13 +49,7 @@ class ModulusServiceProvider extends PackageServiceProvider
             }
 
             if ($storeClass === FileModulusStateStore::class) {
-                $path = $app['config']->get('modulus.state_path', storage_path('modulus/modules.json'));
-
-                if (! is_string($path) || $path === '') {
-                    throw new \InvalidArgumentException('Config [modulus.state_path] must be a non-empty string path.');
-                }
-
-                return new FileModulusStateStore($path);
+                return FileModulusStateStoreFactory::make($app['config'], $app['files']);
             }
 
             $store = $app->make($storeClass);

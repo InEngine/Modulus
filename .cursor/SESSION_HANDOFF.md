@@ -19,11 +19,24 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Future: skeleton + capability catalog
+
+- **Done (docs):** Modulus-compatible modules **must** use `InEngine/module-skeleton` (custom Spatie template). Planned **capability catalog** extension (Step 14): inspect provides/requires, events, peers/sub-modules, custom integrate guidance — richer than Composer suggest; not Modulus core.
+- **Next:** Commit pending Step 3 work; `ModuleRepository`; Step 4 handshake.
+- **Open questions:** Capability descriptor format (PHP class vs JSON); catalog package name.
+
+### 2026-11-03 — Step 3 PackageManifest sync
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** `FilteringPackageManifest`; `PackageManifestInstaller`; discovery config; Pest; Core bootstrap wire.
+- **Next:** Commit Step 3; `ModuleRepository` + facade; Step 4 handshake.
+- **Open questions:** Marketplace / catalog package names.
+
 ### 2026-11-03 — Design: scope=all + marketplace extension
 
 - **Branch:** `feat/modulus-state-store`
-- **Done:** Locked design: optional `discovery.scope=all` for non-module packages; marketplace browse/install is a **separate extension** (not Modulus core); defense in depth required (PackageManifest + provider must not boot unless enabled). Docs: Documentation `Plan and Design.md` + Modulus `DESIGN.md`.
-- **Next:** `ModuleRepository` + facade; PackageManifest sync with scope config; handshake base provider.
+- **Done:** Locked design: optional `discovery.scope=all`; marketplace = separate extension; defense in depth required.
+- **Next:** (see newer entry)
 - **Open questions:** Marketplace package name; denylist defaults for `scope=all`.
 
 ### 2026-11-03 — ModulusStateStore (Steps 1–2 start)

@@ -12,7 +12,7 @@ See [DESIGN.md](DESIGN.md) and the platform [Plan and Design](../../Documentatio
 
 ## Status
 
-Laravel 13 / PHP 8.5 baseline is on `main` ([PR #7](https://github.com/InEngine/Modulus/pull/7) merged). Next: file-backed `ModulusStateStore`, then `ModuleRepository`, PackageManifest sync, self-gating `ModuleServiceProvider`, and Artisan lifecycle commands (including `modulus:doctor`).
+Laravel 13 / PHP 8.5 baseline is on `main` ([PR #7](https://github.com/InEngine/Modulus/pull/7) merged). `ModulusStateStore` + PackageManifest filtering (Step 3) are in progress on `feat/modulus-state-store`. Next: `ModuleRepository`, self-gating `ModuleServiceProvider`, Artisan lifecycle commands (including `modulus:doctor`).
 
 ## Installation
 
@@ -22,6 +22,26 @@ php artisan vendor:publish --tag="modulus-config"
 ```
 
 No migrations are required for the module registry (file-backed state).
+
+### Early boot (required for enable/disable)
+
+Laravel registers discovered providers before package service providers run. After `Application::configure(...)->create()`, call the installer so Modulus can filter `PackageManifest` in time:
+
+```php
+use InEngine\Modulus\Discovery\PackageManifestInstaller;
+
+$app = Application::configure(basePath: dirname(__DIR__))
+    // ...
+    ->create();
+
+if (class_exists(PackageManifestInstaller::class)) {
+    PackageManifestInstaller::install($app);
+}
+
+return $app;
+```
+
+Disabled packages tracked in the Modulus state file are then omitted from auto-discovered providers/aliases. Listing CLI/UI still sees them via the state store.
 
 ## Intended Artisan surface
 

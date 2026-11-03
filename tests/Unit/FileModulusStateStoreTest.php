@@ -1,18 +1,20 @@
 <?php
 
+use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\CorruptModulusStateException;
 use InEngine\Modulus\State\FileModulusStateStore;
+use InEngine\Modulus\State\FileModulusStateStoreFactory;
 
 /**
  * @return array{0: string, 1: string, 2: FileModulusStateStore}
  */
-function modulusStateStoreFixture(): array
+function modulusStateStoreFixture(bool $fsync = false): array
 {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-state-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
 
-    return [$directory, $path, new FileModulusStateStore($path)];
+    return [$directory, $path, new FileModulusStateStore($path, new Filesystem, $fsync)];
 }
 
 function modulusStateStoreCleanup(string $directory, string $path): void
@@ -31,6 +33,37 @@ function modulusStateStoreCleanup(string $directory, string $path): void
         @rmdir($directory);
     }
 }
+
+/**
+ * @param  array<string, array{enabled: bool, version: string|null}>  $state
+ */
+function modulusStateStoreSeed(string $directory, string $path, array $state): void
+{
+    if (! is_dir($directory)) {
+        mkdir($directory, 0755, true);
+    }
+
+    file_put_contents(
+        $path,
+        json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_FORCE_OBJECT | JSON_THROW_ON_ERROR)
+    );
+}
+
+/**
+ * @return array<string, array{enabled: bool, version: string|null}>
+ */
+function modulusStateStoreReadDisk(string $path): array
+{
+    /** @var array<string, array{enabled: bool, version: string|null}> $decoded */
+    $decoded = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+
+    return $decoded;
+}
+
+dataset('modulus_write_modes', [
+    'filesystem replace' => [false],
+    'fsync' => [true],
+]);
 
 it('returns an empty map when the state file is missing', function () {
     [$directory, $path, $store] = modulusStateStoreFixture();
@@ -165,12 +198,313 @@ it('treats an empty json object as an empty module map', function () {
     }
 });
 
+it('isFile+get: missing file before yields empty, seed after yields content', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    $after = [
+        'inengine/alert' => [
+            'enabled' => true,
+            'version' => '1.0.0',
+        ],
+    ];
+
+    try {
+        expect(is_file($path))->toBeFalse()
+            ->and($store->all())->toBe([])
+            ->and($store->get('inengine/alert'))->toBeNull();
+
+        modulusStateStoreSeed($directory, $path, $after);
+
+        expect(is_file($path))->toBeTrue()
+            ->and($store->all())->toEqual($after)
+            ->and($store->get('inengine/alert'))->toEqual($after['inengine/alert']);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('isFile+get: empty file before yields empty map for both write modes', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    try {
+        mkdir($directory, 0755, true);
+        file_put_contents($path, '   ');
+
+        expect(is_file($path))->toBeTrue()
+            ->and($store->all())->toBe([]);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('ensureDirectoryExists: missing directory before write exists after', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    try {
+        expect(is_dir($directory))->toBeFalse()
+            ->and(is_file($path))->toBeFalse();
+
+        $store->put('inengine/alert', [
+            'enabled' => false,
+            'version' => null,
+        ]);
+
+        expect(is_dir($directory))->toBeTrue()
+            ->and(is_file($path))->toBeTrue()
+            ->and(modulusStateStoreReadDisk($path))->toEqual([
+                'inengine/alert' => [
+                    'enabled' => false,
+                    'version' => null,
+                ],
+            ]);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('replace/move write: transitions enable map before to after for both modes', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    $before = [
+        'inengine/alert' => [
+            'enabled' => false,
+            'version' => '1.0.0',
+        ],
+        'inengine/calendar' => [
+            'enabled' => true,
+            'version' => '2.0.0',
+        ],
+    ];
+
+    $after = [
+        'inengine/alert' => [
+            'enabled' => true,
+            'version' => '1.0.0',
+        ],
+        'inengine/calendar' => [
+            'enabled' => false,
+            'version' => '2.0.0',
+        ],
+        'inengine/table-ui' => [
+            'enabled' => false,
+            'version' => '3.0.0',
+        ],
+    ];
+
+    try {
+        modulusStateStoreSeed($directory, $path, $before);
+
+        expect($store->all())->toEqual($before)
+            ->and(modulusStateStoreReadDisk($path))->toEqual($before);
+
+        $store->setEnabled('inengine/alert', true);
+        $store->setEnabled('inengine/calendar', false);
+        $store->put('inengine/table-ui', [
+            'enabled' => false,
+            'version' => '3.0.0',
+        ]);
+
+        expect($store->all())->toEqual($after)
+            ->and(modulusStateStoreReadDisk($path))->toEqual($after);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('replace/move write: remove one package before to after for both modes', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    $before = [
+        'inengine/alert' => [
+            'enabled' => true,
+            'version' => '1.0.0',
+        ],
+        'inengine/calendar' => [
+            'enabled' => false,
+            'version' => '2.0.0',
+        ],
+    ];
+
+    $after = [
+        'inengine/calendar' => [
+            'enabled' => false,
+            'version' => '2.0.0',
+        ],
+    ];
+
+    try {
+        modulusStateStoreSeed($directory, $path, $before);
+
+        expect(modulusStateStoreReadDisk($path))->toEqual($before);
+
+        $store->remove('inengine/alert');
+
+        expect($store->all())->toEqual($after)
+            ->and(modulusStateStoreReadDisk($path))->toEqual($after)
+            ->and($store->get('inengine/alert'))->toBeNull();
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('replace/move write: remove last package leaves empty object on disk', function (bool $fsync) {
+    [$directory, $path, $store] = modulusStateStoreFixture($fsync);
+
+    $before = [
+        'inengine/alert' => [
+            'enabled' => true,
+            'version' => '1.0.0',
+        ],
+    ];
+
+    try {
+        modulusStateStoreSeed($directory, $path, $before);
+
+        expect(modulusStateStoreReadDisk($path))->toEqual($before);
+
+        $store->remove('inengine/alert');
+
+        expect($store->all())->toBe([])
+            ->and(file_get_contents($path))->toBe('{}')
+            ->and(modulusStateStoreReadDisk($path))->toBe([]);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+})->with('modulus_write_modes');
+
+it('fsync move leaves no temp files after a successful write', function () {
+    [$directory, $path, $store] = modulusStateStoreFixture(fsync: true);
+
+    try {
+        $store->put('inengine/alert', [
+            'enabled' => true,
+            'version' => '1.0.0',
+        ]);
+
+        $temps = glob($directory.DIRECTORY_SEPARATOR.'modules.json.*') ?: [];
+
+        expect(is_file($path))->toBeTrue()
+            ->and($temps)->toBe([])
+            ->and(modulusStateStoreReadDisk($path))->toEqual([
+                'inengine/alert' => [
+                    'enabled' => true,
+                    'version' => '1.0.0',
+                ],
+            ]);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+});
+
+it('uses Filesystem replace when state_fsync is false', function () {
+    $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-state-'.uniqid('', true);
+    $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
+
+    $files = Mockery::mock(Filesystem::class);
+    $files->shouldReceive('isFile')->with($path)->andReturn(false);
+    $files->shouldReceive('ensureDirectoryExists')->once()->with($directory);
+    $files->shouldReceive('replace')
+        ->once()
+        ->withArgs(function (string $writePath, string $payload) use ($path): bool {
+            return $writePath === $path
+                && str_contains($payload, 'inengine/alert')
+                && str_contains($payload, '"enabled": true');
+        });
+
+    $store = new FileModulusStateStore($path, $files, fsync: false);
+
+    $store->put('inengine/alert', [
+        'enabled' => true,
+        'version' => '1.0.0',
+    ]);
+});
+
+it('uses fsync write path and never calls Filesystem replace when state_fsync is true', function () {
+    $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-state-'.uniqid('', true);
+    $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
+    mkdir($directory, 0755, true);
+
+    $files = Mockery::mock(Filesystem::class)->makePartial();
+    $files->shouldReceive('replace')->never();
+
+    $store = new FileModulusStateStore($path, $files, fsync: true);
+
+    try {
+        $store->put('inengine/calendar', [
+            'enabled' => false,
+            'version' => '2.0.0',
+        ]);
+
+        expect(is_file($path))->toBeTrue()
+            ->and($store->get('inengine/calendar'))->toEqual([
+                'enabled' => false,
+                'version' => '2.0.0',
+            ]);
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+});
+
+it('delete: cleans up temp file when fsync move fails', function () {
+    $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-state-'.uniqid('', true);
+    $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
+    mkdir($directory, 0755, true);
+
+    $files = Mockery::mock(Filesystem::class)->makePartial();
+    $files->shouldReceive('replace')->never();
+    $files->shouldReceive('move')->once()->andReturn(false);
+    $files->shouldReceive('delete')
+        ->once()
+        ->withArgs(fn (string $tempPath): bool => str_starts_with($tempPath, $path.'.'));
+
+    $store = new FileModulusStateStore($path, $files, fsync: true);
+
+    try {
+        expect(fn () => $store->put('inengine/alert', [
+            'enabled' => true,
+            'version' => null,
+        ]))->toThrow(RuntimeException::class);
+
+        expect(is_file($path))->toBeFalse();
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+});
+
+it('factory honors modulus.state_fsync config', function () {
+    $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-state-'.uniqid('', true);
+    $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
+
+    config()->set('modulus.state_path', $path);
+    config()->set('modulus.state_fsync', true);
+
+    $store = FileModulusStateStoreFactory::make(config(), new Filesystem);
+
+    $reflection = new ReflectionClass($store);
+    $fsync = $reflection->getProperty('fsync');
+
+    expect($fsync->getValue($store))->toBeTrue();
+
+    try {
+        $store->put('inengine/alert', [
+            'enabled' => true,
+            'version' => null,
+        ]);
+
+        expect(is_file($path))->toBeTrue()
+            ->and($store->isEnabled('inengine/alert'))->toBeTrue();
+    } finally {
+        modulusStateStoreCleanup($directory, $path);
+    }
+});
+
 it('resolves the default file store from the container using config', function () {
     [$directory, $path] = modulusStateStoreFixture();
 
     try {
         config()->set('modulus.store', FileModulusStateStore::class);
         config()->set('modulus.state_path', $path);
+        config()->set('modulus.state_fsync', true);
 
         app()->forgetInstance(ModulusStateStore::class);
 
@@ -185,6 +519,11 @@ it('resolves the default file store from the container using config', function (
 
         expect($resolved->isEnabled('inengine/alert'))->toBeTrue()
             ->and(is_file($path))->toBeTrue();
+
+        $reflection = new ReflectionClass($resolved);
+        $fsync = $reflection->getProperty('fsync');
+
+        expect($fsync->getValue($resolved))->toBeTrue();
     } finally {
         modulusStateStoreCleanup($directory, $path);
     }

@@ -6,7 +6,7 @@ Package-local design notes for `inengine/modulus`. Canonical platform plan: [Pla
 
 Module runtime for InEngine: discover Composer Laravel packages that are modules, track enabled/disabled in a **file** (`ModulusStateStore`), sync enable/disable through Laravel **package discovery**, lifecycle hooks, Artisan (including **`modulus:doctor`**), and event bus + contracts/DTOs.
 
-**Not in core:** marketplace browse/install UX — that is a separate extension that calls Modulus APIs after `composer require`.
+**Not in core:** marketplace browse/install, or capability inspect/compat UX — those are separate extensions that call Modulus APIs.
 
 ## Collaborating parts (not a god object)
 
@@ -14,11 +14,16 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 |-------|------|
 | `ModulusStateStore` | Atomic temp-write + swap of enabled/disabled state (swappable via `modulus.store`) |
 | Repository / orchestrator | Enable, disable, uninstall, deps; list known enabled **and** disabled |
-| `PackageManifest` sync | Filter effective auto-discovered providers (`discovery.scope`: `modules` default, optional `all`) |
+| `FilteringPackageManifest` | Read-time omit of disabled tracked packages from discovery |
+| `PackageManifestInstaller` | Early `beforeBootstrapping(RegisterProviders)` rebind (host must call) |
 | Base `ModuleServiceProvider` | Register-with-Modulus; **do not boot unless enabled** (defense in depth) |
 | Lifecycle hooks | Non-destructive disable/uninstall; migrate on enable/upgrade |
 | Events + contracts/DTOs | Inter-module integration |
 | Artisan | list, discover, enable, disable, uninstall, status, **doctor** |
+
+## Module authoring (required template)
+
+Modulus-compatible feature modules should be created from **`InEngine/module-skeleton`**: a customized Spatie Laravel package template that includes the base provider handshake, quality gates, and a **capability descriptor stub** (provides/requires, events, related packages, integrate notes). Hand-rolled packages are discouraged; inspect/compat tooling will assume the skeleton shape.
 
 ## Discovery scope
 
@@ -29,12 +34,15 @@ CLI/UI always list from Modulus state (installed/disabled/enabled), not from “
 
 ## Defense in depth
 
-1. PackageManifest omits disabled providers.  
-2. Module providers still check Modulus and refuse to boot if disabled.
+1. PackageManifest omits disabled providers (Step 3 — requires host early boot installer).  
+2. Module providers still check Modulus and refuse to boot if disabled (Step 4).
 
-## Marketplace (extension, not this package)
+## Extensions (not this package)
 
-Separate package: discover/install from known module sources (Packagist, private Packagist, Git). Ends in discover → disabled → explicit enable.
+| Extension | Role |
+|-----------|------|
+| Marketplace | Browse/install from Packagist / private Packagist / Git → discover → disabled → enable |
+| Capability catalog | Interrogate descriptors: what a module does, peers/sub-modules, events/contracts, how a custom module integrates (`modulus:inspect` / compat; CLI/API first) |
 
 ## Quality
 
@@ -42,4 +50,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Step 0 done (L13 / PHP 8.5 on `main`). Steps 1–2 underway (`ModulusStateStore` + swappable store config). Next: `ModuleRepository`, then PackageManifest sync + handshake.
+Step 0 done. Steps 1–2: `ModulusStateStore` + swappable store. Step 3: `FilteringPackageManifest` + `PackageManifestInstaller` (Core bootstrap wired when class present). Next: `ModuleRepository`, then handshake base provider (Step 4). Skeleton + capability catalog are later steps (12 / 14).

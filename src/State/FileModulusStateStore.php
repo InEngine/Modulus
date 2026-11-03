@@ -2,11 +2,15 @@
 
 namespace InEngine\Modulus\State;
 
+use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\CorruptModulusStateException;
 
 /**
  * File-backed {@see ModulusStateStore} using JSON and an atomic temp-write + rename.
+ *
+ * By default writes go through Laravel {@see Filesystem::replace()}. Opt into
+ * `fsync` before rename via config when durability under sudden power loss matters.
  *
  * @phpstan-import-type ModuleState from ModulusStateStore
  */
@@ -14,6 +18,8 @@ class FileModulusStateStore implements ModulusStateStore
 {
     public function __construct(
         protected string $path,
+        protected Filesystem $files = new Filesystem,
+        protected bool $fsync = false,
     ) {}
 
     /**
@@ -95,13 +101,13 @@ class FileModulusStateStore implements ModulusStateStore
      */
     protected function read(): array
     {
-        if (! is_file($this->path)) {
+        if (! $this->files->isFile($this->path)) {
             return [];
         }
 
-        $contents = file_get_contents($this->path);
+        $contents = $this->files->get($this->path);
 
-        if ($contents === false || trim($contents) === '') {
+        if (trim($contents) === '') {
             return [];
         }
 
@@ -132,7 +138,7 @@ class FileModulusStateStore implements ModulusStateStore
     }
 
     /**
-     * Persist the full module map with a temp file + atomic rename.
+     * Persist the full module map with an atomic temp file + rename.
      *
      * @param  array<string, ModuleState>  $modules
      */
@@ -140,16 +146,28 @@ class FileModulusStateStore implements ModulusStateStore
     {
         $directory = dirname($this->path);
 
-        if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
-            throw new \RuntimeException("Unable to create Modulus state directory [{$directory}].");
-        }
+        $this->files->ensureDirectoryExists($directory);
 
-        // JSON_FORCE_OBJECT keeps an empty map as `{}` (not `[]`), which read() rejects as invalid shape.
+        // JSON_FORCE_OBJECT keeps an empty map as `{}` (not `[]`).
         $payload = json_encode(
             $modules,
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT
         );
 
+        if ($this->fsync) {
+            $this->writeWithFsync($payload);
+
+            return;
+        }
+
+        $this->files->replace($this->path, $payload);
+    }
+
+    /**
+     * Atomic write with fflush/fsync before rename for stronger durability.
+     */
+    protected function writeWithFsync(string $payload): void
+    {
         $tempPath = $this->path.'.'.uniqid('tmp', true);
 
         $handle = fopen($tempPath, 'wb');
@@ -173,14 +191,14 @@ class FileModulusStateStore implements ModulusStateStore
         }
 
         // On Windows, rename() cannot overwrite an existing destination.
-        if (DIRECTORY_SEPARATOR === '\\' && is_file($this->path) && ! @unlink($this->path)) {
-            @unlink($tempPath);
+        if (DIRECTORY_SEPARATOR === '\\' && $this->files->isFile($this->path) && ! $this->files->delete($this->path)) {
+            $this->files->delete($tempPath);
 
             throw new \RuntimeException("Unable to replace existing Modulus state file [{$this->path}].");
         }
 
-        if (! rename($tempPath, $this->path)) {
-            @unlink($tempPath);
+        if (! $this->files->move($tempPath, $this->path)) {
+            $this->files->delete($tempPath);
 
             throw new \RuntimeException("Unable to atomically replace Modulus state file [{$this->path}].");
         }
