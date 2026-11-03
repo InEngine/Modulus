@@ -19,6 +19,20 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Step 1a test gaps closed
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** Step 1a documented; Pest for installer rebind, discovery syncer forgetInstance, enable/disable→filtered providers, deny `forget`, register version bump. Suite **47 passed**.
+- **Next:** Commit Step 1 + 1a; Step 4 handshake polish.
+- **Open questions:** None.
+
+### 2026-11-03 — Step 1 complete + old API cleanup
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** `ModuleRepository` + syncer + facade + base `ModuleServiceProvider`; removed old modules.php rewrite stack.
+- **Next:** (see newer entry)
+- **Open questions:** None.
+
 ### 2026-11-03 — Future: skeleton + capability catalog
 
 - **Done (docs):** Modulus-compatible modules **must** use `InEngine/module-skeleton` (custom Spatie template). Planned **capability catalog** extension (Step 14): inspect provides/requires, events, peers/sub-modules, custom integrate guidance — richer than Composer suggest; not Modulus core.

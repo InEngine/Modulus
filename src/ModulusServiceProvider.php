@@ -4,6 +4,8 @@ namespace InEngine\Modulus;
 
 use InEngine\Modulus\Commands\ModulusCommand;
 use InEngine\Modulus\Contracts\ModulusStateStore;
+use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
+use InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer;
 use InEngine\Modulus\State\FileModulusStateStore;
 use InEngine\Modulus\State\FileModulusStateStoreFactory;
 use Spatie\LaravelPackageTools\Package;
@@ -20,16 +22,13 @@ class ModulusServiceProvider extends PackageServiceProvider
          */
         $package
             ->name('modulus')
-            ->hasConfigFile(['modulus', 'modules'])
+            ->hasConfigFile('modulus')
             ->hasViews()
             ->hasCommand(ModulusCommand::class);
     }
 
     /**
-     * Bind the configured module state store before the package boots.
-     *
-     * Defaults to {@see FileModulusStateStore}. Hosts may set `modulus.store`
-     * to any class that implements {@see ModulusStateStore}.
+     * Bind store, discovery syncer, and module repository.
      */
     public function packageRegistered(): void
     {
@@ -61,6 +60,16 @@ class ModulusServiceProvider extends PackageServiceProvider
             }
 
             return $store;
+        });
+
+        $this->app->singleton(PackageDiscoverySyncer::class, FilteringPackageDiscoverySyncer::class);
+
+        $this->app->singleton(ModuleRepository::class, function ($app): ModuleRepository {
+            return ModuleRepository::fromConfig(
+                $app->make(ModulusStateStore::class),
+                $app->make(PackageDiscoverySyncer::class),
+                $app['config'],
+            );
         });
     }
 }

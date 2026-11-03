@@ -50,4 +50,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Step 0 done. Steps 1–2: `ModulusStateStore` + swappable store. Step 3: `FilteringPackageManifest` + `PackageManifestInstaller` (Core bootstrap wired when class present). Next: `ModuleRepository`, then handshake base provider (Step 4). Skeleton + capability catalog are later steps (12 / 14).
+Steps 0–3 landed. Step 1 + **1a** complete: collaborating services, old API removed, Pest closes installer/syncer/enable→filter/deny-forget/version gaps. Next: Step 4 handshake polish; Step 5 Core require. Skeleton + capability catalog later (12 / 14).
