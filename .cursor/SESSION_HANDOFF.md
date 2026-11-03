@@ -19,12 +19,19 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Design: scope=all + marketplace extension
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** Locked design: optional `discovery.scope=all` for non-module packages; marketplace browse/install is a **separate extension** (not Modulus core); defense in depth required (PackageManifest + provider must not boot unless enabled). Docs: Documentation `Plan and Design.md` + Modulus `DESIGN.md`.
+- **Next:** `ModuleRepository` + facade; PackageManifest sync with scope config; handshake base provider.
+- **Open questions:** Marketplace package name; denylist defaults for `scope=all`.
+
 ### 2026-11-03 — ModulusStateStore (Steps 1–2 start)
 
 - **Branch:** `feat/modulus-state-store` (from `main` after PR #7 merge).
-- **Done:** `ModulusStateStore` contract + `FileModulusStateStore` (JSON, atomic temp+rename, `storage/modulus/modules.json`); provider singleton bind; Pest coverage (9 passing); DESIGN.md committed; legacy modules.php tests skipped until `ModuleRepository`.
+- **Done:** `ModulusStateStore` + swappable `modulus.store` (default file JSON); Pest; attribution hook/rule; DESIGN.md.
 - **Next:** `ModuleRepository` + facade rewire; drop old `Modulus` config rewrite; then PackageManifest sync (Step 3).
-- **Open questions:** Packagist client as namespace vs package (Step 10).
+- **Open questions:** (see newer entry)
 
 ### 2026-09-08 — Session pause (design locked; implement next)
 
