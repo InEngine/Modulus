@@ -8,17 +8,6 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Existing Unit tests target the pre-redesign config-file API.
-        // Skip until rewritten for DESIGN.md / Plan steps 1–2.
-        $this->markTestSkipped(
-            'Deferred until Modulus redesign (DESIGN.md). Suite must be rewritten for the new API.'
-        );
-    }
-
     protected function getPackageProviders($app)
     {
         return [

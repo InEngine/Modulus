@@ -19,6 +19,34 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — ModulusStateStore (Steps 1–2 start)
+
+- **Branch:** `feat/modulus-state-store` (from `main` after PR #7 merge).
+- **Done:** `ModulusStateStore` contract + `FileModulusStateStore` (JSON, atomic temp+rename, `storage/modulus/modules.json`); provider singleton bind; Pest coverage (9 passing); DESIGN.md committed; legacy modules.php tests skipped until `ModuleRepository`.
+- **Next:** `ModuleRepository` + facade rewire; drop old `Modulus` config rewrite; then PackageManifest sync (Step 3).
+- **Open questions:** Packagist client as namespace vs package (Step 10).
+
+### 2026-09-08 — Session pause (design locked; implement next)
+
+- **Branch:** `feat/laravel-13-support` — PR **[#7](https://github.com/InEngine/Modulus/pull/7)** still open.
+- **Done:** Design locked with Core/Documentation: see [DESIGN.md](../DESIGN.md) and `InEngine/Documentation/Plan and Design.md` steps 0–13. Do not re-litigate file vs DB, discovery approach, or CLI/API-first.
+- **Next:** Merge PR #7 when CI green; implement Step 1–2 (`ModulusStateStore` + service split), then discovery sync, handshake base provider, Artisan including `modulus:doctor`.
+- **Open questions:** State path/format; Packagist client as namespace vs package.
+
+### 2026-09-08 — Expanded plan sync (state store, discovery, doctor)
+
+- **Branch:** `feat/laravel-13-support` — PR **[#7](https://github.com/InEngine/Modulus/pull/7)** still open.
+- **Done:** Aligned [DESIGN.md](../DESIGN.md) with Documentation plan: multi-class Modulus, **`ModulusStateStore`** (atomic swap), PackageManifest sync (no composer.json toggle fights), Core early-boot require, SemVer/Pint/Pest/PHPStan, bus+contracts/DTOs, Composer/Packagist submodule, non-destructive disable/uninstall, **`modulus:doctor`**, Steps 0–13.
+- **Next:** Merge PR #7; implement StateStore + service split; then discovery sync + doctor.
+- **Open questions:** Exact state path/format; Packagist client as namespace vs separate package.
+
+### 2026-09-08 — File registry + CLI parity (design)
+
+- **Branch:** `feat/laravel-13-support` — PR **[#7](https://github.com/InEngine/Modulus/pull/7)** still open.
+- **Done:** Documented target design in [DESIGN.md](../DESIGN.md) + README: **file-backed** state (not DB); Artisan for **every** UI action; discovery via `extra.laravel.providers` only. Modules **register with Modulus** when present and stay disabled until enabled. Modulus **syncs enable/disable into Laravel package discovery** (`PackageManifest` / packages cache)—not host `composer.json` dont-discover churn. Aligns with `InEngine/Documentation/Plan and Design.md`.
+- **Next:** Merge PR #7 when CI green; implement file store, discovery sync, gating/`register` base provider, full Artisan surface + Pest; then module-skeleton pilot.
+- **Open questions:** Exact state file path/format; PackageManifest decorate vs rewrite `packages.php`; uninstall always `composer remove` vs forget-only flag.
+
 ### 2026-08-28 — Laravel 13 / PHP 8.5 support
 
 - **Branch:** `feat/laravel-13-support` — PR **[#7](https://github.com/InEngine/Modulus/pull/7)**; tracking **[#8](https://github.com/InEngine/Modulus/issues/8)**.

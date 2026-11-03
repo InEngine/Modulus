@@ -1,4 +1,4 @@
-# A Module System for InEngine
+# Modulus
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/inengine/modulus.svg?style=flat-square)](https://packagist.org/packages/inengine/modulus)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/inengine/modulus/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/inengine/modulus/actions?query=workflow%3Arun-tests+branch%3Amain)
@@ -6,56 +6,43 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/inengine/modulus.svg?style=flat-square)](https://packagist.org/packages/inengine/modulus)
 [![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+Module system for [InEngine](https://github.com/InEngine): discover, enable, disable, and uninstall Composer-based Laravel modules. **CLI / API first**; UI is optional and must share the same API. Enabled/disabled state is tracked in a **file**, then synced so Laravel’s package discovery only loads enabled module providers. Feature modules **register with Modulus** when it is present and stay disabled until enabled.
 
-## Support us
+See [DESIGN.md](DESIGN.md) and the platform [Plan and Design](../../Documentation/Plan%20and%20Design.md) (stepped plan 0–13: `ModulusStateStore`, PackageManifest sync, doctor, Composer submodule, non-destructive lifecycle).
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/Modulus.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/Modulus)
+## Status
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+Laravel 13 / PHP 8.5 baseline is on `main` ([PR #7](https://github.com/InEngine/Modulus/pull/7) merged). Next: file-backed `ModulusStateStore`, then `ModuleRepository`, PackageManifest sync, self-gating `ModuleServiceProvider`, and Artisan lifecycle commands (including `modulus:doctor`).
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
 composer require inengine/modulus
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="modulus-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
 php artisan vendor:publish --tag="modulus-config"
 ```
 
-This is the contents of the published config file:
+No migrations are required for the module registry (file-backed state).
 
-```php
-return [
-];
-```
+## Intended Artisan surface
 
-Optionally, you can publish the views using
+Every UI capability must have a matching Artisan command (same underlying API):
 
 ```bash
-php artisan vendor:publish --tag="modulus-views"
+php artisan modulus:list
+php artisan modulus:discover
+php artisan modulus:enable {module}
+php artisan modulus:disable {module}
+php artisan modulus:uninstall {module}
+php artisan modulus:status {module}
 ```
 
-## Usage
+## Module packages
 
-```php
-$modulus = new InEngine\Modulus();
-echo $modulus->echoPhrase('Hello, InEngine!');
-```
+Feature modules are Spatie-style Laravel packages that:
+
+- Register via `extra.laravel.providers` only
+- Extend Modulus’s base `ModuleServiceProvider`: if Modulus exists, **register with it** and boot only when enabled; if not, boot normally (standalone)
+- Rely on Modulus to sync enable/disable into Laravel’s effective package-discovery / provider load set
 
 ## Testing
 

@@ -3,6 +3,8 @@
 namespace InEngine\Modulus;
 
 use InEngine\Modulus\Commands\ModulusCommand;
+use InEngine\Modulus\Contracts\ModulusStateStore;
+use InEngine\Modulus\State\FileModulusStateStore;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -19,7 +21,19 @@ class ModulusServiceProvider extends PackageServiceProvider
             ->name('modulus')
             ->hasConfigFile(['modulus', 'modules'])
             ->hasViews()
-            ->hasMigration('create_modulus_table')
             ->hasCommand(ModulusCommand::class);
+    }
+
+    /**
+     * Bind the file-backed module state store before the package boots.
+     */
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(ModulusStateStore::class, function ($app): FileModulusStateStore {
+            /** @var string $path */
+            $path = $app['config']->get('modulus.state_path', storage_path('modulus/modules.json'));
+
+            return new FileModulusStateStore($path);
+        });
     }
 }
