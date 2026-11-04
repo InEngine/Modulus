@@ -1,25 +1,41 @@
 <?php
 
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Log;
+use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
+use InEngine\Modulus\Exceptions\MissingModuleException;
 use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\State\FileModulusStateStore;
 use Mockery\MockInterface;
 
 /**
- * @return array{0: string, 1: string, 2: ModuleRepository, 3: MockInterface&PackageDiscoverySyncer}
+ * @return array{0: string, 1: string, 2: ModuleRepository, 3: MockInterface&PackageDiscoverySyncer, 4: MockInterface&InstalledPackageLocator}
  */
-function moduleRepositoryFixture(array $deny = ['inengine/modulus']): array
-{
+function moduleRepositoryFixture(
+    array $deny = ['inengine/modulus'],
+    ?InstalledPackageLocator $installedPackages = null,
+): array {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-repo-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
     $store = new FileModulusStateStore($path, new Filesystem, false);
     $syncer = Mockery::mock(PackageDiscoverySyncer::class);
     $syncer->shouldReceive('sync')->byDefault();
 
-    return [$directory, $path, new ModuleRepository($store, $syncer, $deny), $syncer];
+    if ($installedPackages === null) {
+        $installedPackages = Mockery::mock(InstalledPackageLocator::class);
+        $installedPackages->shouldReceive('isInstalled')->andReturn(true)->byDefault();
+    }
+
+    return [
+        $directory,
+        $path,
+        new ModuleRepository($store, $syncer, $installedPackages, $deny),
+        $syncer,
+        $installedPackages,
+    ];
 }
 
 function moduleRepositoryCleanup(string $directory, string $path): void
@@ -167,6 +183,10 @@ it('resolves the repository from the container and facade', function () {
         config()->set('modulus.state_fsync', false);
         config()->set('modulus.discovery.deny', ['inengine/modulus']);
 
+        $locator = Mockery::mock(InstalledPackageLocator::class);
+        $locator->shouldReceive('isInstalled')->andReturn(true);
+        app()->instance(InstalledPackageLocator::class, $locator);
+
         app()->forgetInstance(ModulusStateStore::class);
         app()->forgetInstance(ModuleRepository::class);
 
@@ -179,6 +199,66 @@ it('resolves the repository from the container and facade', function () {
 
         expect(ModulusFacade::isEnabled('inengine/alert'))->toBeTrue()
             ->and(ModulusFacade::enabled())->toHaveKey('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('throws when enabling a package that is not installed', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
+
+    try {
+        expect(fn () => $repo->enable('inengine/alert'))
+            ->toThrow(MissingModuleException::class, 'enabled module [inengine/alert]');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('throws when an enabled tracked package is not installed', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
+
+    try {
+        $repo->register('inengine/alert');
+        // Bypass enable() install check by writing state directly.
+        $repo->get('inengine/alert');
+        $store = new ReflectionProperty($repo, 'store');
+        $store->getValue($repo)->setEnabled('inengine/alert', true);
+
+        expect(fn () => $repo->validateTrackedPackages())
+            ->toThrow(MissingModuleException::class, 'enabled module [inengine/alert]');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('logs when a disabled tracked package is not installed', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
+
+    try {
+        $repo->register('inengine/alert');
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                return str_contains($message, 'disabled module [inengine/alert]')
+                    && ($context['package'] ?? null) === 'inengine/alert'
+                    && ($context['enabled'] ?? null) === false
+                    && ($context['exception'] ?? null) instanceof MissingModuleException;
+            });
+
+        $repo->validateTrackedPackages();
+
+        expect($repo->isEnabled('inengine/alert'))->toBeFalse();
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Filesystem\Filesystem;
+use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer;
 use InEngine\Modulus\Discovery\FilteringPackageManifest;
@@ -27,7 +28,9 @@ it('enable and disable change filtered providers after discovery sync', function
 
     $store = new FileModulusStateStore($statePath, new Filesystem, false);
     $syncer = new FilteringPackageDiscoverySyncer(app());
-    $repo = new ModuleRepository($store, $syncer, ['inengine/modulus']);
+    $installed = Mockery::mock(InstalledPackageLocator::class);
+    $installed->shouldReceive('isInstalled')->andReturn(true);
+    $repo = new ModuleRepository($store, $syncer, $installed, ['inengine/modulus']);
 
     $makeManifest = function () use ($directory, $packagesPath, $store): FilteringPackageManifest {
         return new FilteringPackageManifest(
@@ -77,8 +80,10 @@ it('discovery syncer is invoked by repository toggles', function () {
     $syncer = Mockery::mock(PackageDiscoverySyncer::class);
     // enable: register(new)+sync then setEnabled+sync; disable: setEnabled+sync
     $syncer->shouldReceive('sync')->times(3);
+    $installed = Mockery::mock(InstalledPackageLocator::class);
+    $installed->shouldReceive('isInstalled')->andReturn(true);
 
-    $repo = new ModuleRepository($store, $syncer, ['inengine/modulus']);
+    $repo = new ModuleRepository($store, $syncer, $installed, ['inengine/modulus']);
 
     try {
         $repo->enable('inengine/alert');

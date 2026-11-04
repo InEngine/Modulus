@@ -1,5 +1,6 @@
 <?php
 
+use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\ModuleServiceProvider;
@@ -52,6 +53,11 @@ function prepareModulusStatePath(): string
     config()->set('modulus.state_path', $path);
     config()->set('modulus.state_fsync', false);
     config()->set('modulus.store', FileModulusStateStore::class);
+
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->andReturn(true);
+    app()->instance(InstalledPackageLocator::class, $locator);
+
     app()->forgetInstance(ModuleRepository::class);
     app()->forgetInstance(ModulusStateStore::class);
 

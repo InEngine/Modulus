@@ -15,6 +15,7 @@ use InEngine\Modulus\ModuleRepository;
  * @method static void enable(string $package)
  * @method static void disable(string $package)
  * @method static void forget(string $package)
+ * @method static void validateTrackedPackages()
  * @method static bool isDenied(string $package)
  *
  * @see ModuleRepository

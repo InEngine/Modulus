@@ -3,8 +3,11 @@
 namespace InEngine\Modulus;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Support\Facades\Log;
+use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
+use InEngine\Modulus\Exceptions\MissingModuleException;
 
 /**
  * Orchestrates module registration and enable/disable against the state store.
@@ -22,6 +25,7 @@ class ModuleRepository
     public function __construct(
         protected ModulusStateStore $store,
         protected PackageDiscoverySyncer $discovery,
+        protected InstalledPackageLocator $installedPackages,
         protected array $deny = ['inengine/modulus'],
     ) {}
 
@@ -31,6 +35,7 @@ class ModuleRepository
     public static function fromConfig(
         ModulusStateStore $store,
         PackageDiscoverySyncer $discovery,
+        InstalledPackageLocator $installedPackages,
         ConfigRepository $config,
     ): self {
         $deny = $config->get('modulus.discovery.deny', ['inengine/modulus']);
@@ -42,7 +47,7 @@ class ModuleRepository
         /** @var list<string> $denyList */
         $denyList = array_values(array_filter($deny, 'is_string'));
 
-        return new self($store, $discovery, $denyList);
+        return new self($store, $discovery, $installedPackages, $denyList);
     }
 
     /**
@@ -118,6 +123,8 @@ class ModuleRepository
 
     /**
      * Enable a tracked package (registers first when unknown).
+     *
+     * @throws MissingModuleException When the Composer package is not installed.
      */
     public function enable(string $package): void
     {
@@ -127,9 +134,56 @@ class ModuleRepository
             return;
         }
 
+        $this->assertPackageIsInstalled($package, wasEnabled: true);
+
         $this->register($package);
         $this->store->setEnabled($package, true);
         $this->discovery->sync();
+    }
+
+    /**
+     * Ensure tracked packages still exist in Composer.
+     *
+     * Enabled + missing → throws. Disabled + missing → exception is thrown then
+     * reported to the Laravel log without aborting boot.
+     *
+     * @throws MissingModuleException When an enabled tracked package is not installed.
+     */
+    public function validateTrackedPackages(): void
+    {
+        foreach ($this->store->all() as $package => $state) {
+            if ($this->isDenied($package) || $this->installedPackages->isInstalled($package)) {
+                continue;
+            }
+
+            $exception = new MissingModuleException($package, $state['enabled']);
+
+            if ($state['enabled']) {
+                throw $exception;
+            }
+
+            try {
+                throw $exception;
+            } catch (MissingModuleException $e) {
+                Log::warning($e->getMessage(), [
+                    'package' => $package,
+                    'enabled' => false,
+                    'exception' => $e,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * @throws MissingModuleException
+     */
+    protected function assertPackageIsInstalled(string $package, bool $wasEnabled): void
+    {
+        if ($this->installedPackages->isInstalled($package)) {
+            return;
+        }
+
+        throw new MissingModuleException($package, $wasEnabled);
     }
 
     /**
