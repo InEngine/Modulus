@@ -2,6 +2,7 @@
 
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
+use InEngine\Modulus\Exceptions\InvalidModulusStateStoreException;
 use InEngine\Modulus\State\FileModulusStateStore;
 use InEngine\Modulus\State\FileModulusStateStoreFactory;
 use InEngine\Modulus\State\ModulusStateStoreResolver;
@@ -25,31 +26,35 @@ it('resolves the default file store from modulus.store config', function () {
     }
 });
 
-it('rejects a non-string modulus.store value', function () {
+it('throws when modulus.store is not a string class name', function () {
     config()->set('modulus.store', ['not-a-class']);
 
-    ModulusStateStoreResolver::resolve(app());
-})->throws(InvalidArgumentException::class, 'Config [modulus.store] must be a concrete class name');
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Config [modulus.store] must be a concrete class name');
+});
 
-it('rejects an empty modulus.store value', function () {
+it('throws when modulus.store is an empty string', function () {
     config()->set('modulus.store', '');
 
-    ModulusStateStoreResolver::resolve(app());
-})->throws(InvalidArgumentException::class, 'Config [modulus.store] must be a concrete class name');
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Config [modulus.store] must be a concrete class name');
+});
 
-it('rejects a missing modulus.store class', function () {
+it('throws when modulus.store names a missing class', function () {
     config()->set('modulus.store', 'InEngine\\Modulus\\MissingStateStore');
 
-    ModulusStateStoreResolver::resolve(app());
-})->throws(InvalidArgumentException::class, 'Config [modulus.store] must be a concrete class name');
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Config [modulus.store] must be a concrete class name');
+});
 
-it('rejects a modulus.store class that does not implement the contract', function () {
+it('throws when modulus.store class does not implement the contract', function () {
     config()->set('modulus.store', stdClass::class);
 
-    ModulusStateStoreResolver::resolve(app());
-})->throws(InvalidArgumentException::class, 'must implement');
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'must implement');
+});
 
-it('rejects when the container returns a non-contract instance for modulus.store', function () {
+it('throws when the container returns a non-contract instance for modulus.store', function () {
     $customClass = new class implements ModulusStateStore
     {
         public function all(): array
@@ -77,8 +82,25 @@ it('rejects when the container returns a non-contract instance for modulus.store
     app()->bind($customClass, fn () => new stdClass);
     config()->set('modulus.store', $customClass);
 
-    ModulusStateStoreResolver::resolve(app());
-})->throws(InvalidArgumentException::class, 'Resolved [modulus.store] instance must implement');
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Resolved [modulus.store] instance must implement');
+});
+
+it('throws when resolving the container store with invalid modulus.store config', function () {
+    config()->set('modulus.store', stdClass::class);
+    app()->forgetInstance(ModulusStateStore::class);
+
+    expect(fn () => app(ModulusStateStore::class))
+        ->toThrow(InvalidModulusStateStoreException::class);
+});
+
+it('throws when modulus.state_path is empty while resolving the file store', function () {
+    config()->set('modulus.store', FileModulusStateStore::class);
+    config()->set('modulus.state_path', '');
+
+    expect(fn () => ModulusStateStoreResolver::resolve(app()))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Config [modulus.state_path] must be a non-empty string path');
+});
 
 it('resolves a custom store class bound in the container', function () {
     $custom = new class implements ModulusStateStore
@@ -129,9 +151,9 @@ it('resolves a custom store class bound in the container', function () {
     expect(ModulusStateStoreResolver::resolve(app()))->toBe($custom);
 });
 
-it('rejects an empty modulus.state_path for the file store', function () {
-    config()->set('modulus.store', FileModulusStateStore::class);
+it('throws when FileModulusStateStoreFactory receives an empty state_path', function () {
     config()->set('modulus.state_path', '');
 
-    FileModulusStateStoreFactory::make(config(), new Filesystem);
-})->throws(InvalidArgumentException::class, 'Config [modulus.state_path] must be a non-empty string path');
+    expect(fn () => FileModulusStateStoreFactory::make(config(), new Filesystem))
+        ->toThrow(InvalidModulusStateStoreException::class, 'Config [modulus.state_path] must be a non-empty string path');
+});

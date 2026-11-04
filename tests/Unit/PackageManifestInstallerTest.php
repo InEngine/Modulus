@@ -6,6 +6,7 @@ use Illuminate\Foundation\PackageManifest;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Discovery\FilteringPackageManifest;
 use InEngine\Modulus\Discovery\PackageManifestInstaller;
+use InEngine\Modulus\Exceptions\InvalidModulusStateStoreException;
 use InEngine\Modulus\State\FileModulusStateStore;
 
 function modulusInstallerFixture(): array
@@ -170,4 +171,23 @@ it('exposes the package default config path', function () {
     expect(PackageManifestInstaller::defaultConfigPath())
         ->toEndWith('/config/modulus.php')
         ->and(is_file(PackageManifestInstaller::defaultConfigPath()))->toBeTrue();
+});
+
+it('throws when resolving the early manifest with an invalid state store', function () {
+    [$directory, $statePath, $packagesPath] = modulusInstallerFixture();
+
+    try {
+        /** @var Application $app */
+        $app = app();
+
+        config()->set('modulus.store', stdClass::class);
+        config()->set('modulus.state_path', $statePath);
+        config()->set('modulus.discovery.deny', ['inengine/modulus']);
+        config()->set('modulus.discovery.scope', 'modules');
+
+        expect(fn () => modulusInstallerResolveManifest($app, $directory, $packagesPath))
+            ->toThrow(InvalidModulusStateStoreException::class);
+    } finally {
+        modulusInstallerCleanup($directory);
+    }
 });

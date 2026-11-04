@@ -3,6 +3,7 @@
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\CorruptModulusStateException;
+use InEngine\Modulus\Exceptions\InvalidModulusStateStoreException;
 use InEngine\Modulus\State\FileModulusStateStore;
 use InEngine\Modulus\State\FileModulusStateStoreFactory;
 
@@ -586,9 +587,10 @@ it('resolves a custom store class from modulus.store config', function () {
     expect($resolved->isEnabled('inengine/alert'))->toBeTrue();
 });
 
-it('rejects a modulus.store class that does not implement the contract', function () {
+it('throws InvalidModulusStateStoreException when modulus.store does not implement the contract', function () {
     config()->set('modulus.store', stdClass::class);
     app()->forgetInstance(ModulusStateStore::class);
 
-    app(ModulusStateStore::class);
-})->throws(InvalidArgumentException::class);
+    expect(fn () => app(ModulusStateStore::class))
+        ->toThrow(InvalidModulusStateStoreException::class);
+});
