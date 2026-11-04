@@ -7,8 +7,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\PackageManifest;
 use InEngine\Modulus\Contracts\ModulusStateStore;
-use InEngine\Modulus\State\FileModulusStateStore;
-use InEngine\Modulus\State\FileModulusStateStoreFactory;
+use InEngine\Modulus\State\ModulusStateStoreResolver;
 
 /**
  * Binds {@see FilteringPackageManifest} before Laravel registers discovered providers.
@@ -100,35 +99,7 @@ final class PackageManifestInstaller
         }
 
         $app->singleton(ModulusStateStore::class, function (Application $app): ModulusStateStore {
-            $storeClass = $app['config']->get('modulus.store', FileModulusStateStore::class);
-
-            if (! is_string($storeClass) || $storeClass === '' || ! class_exists($storeClass)) {
-                throw new \InvalidArgumentException(
-                    'Config [modulus.store] must be a concrete class name implementing '.ModulusStateStore::class.'.'
-                );
-            }
-
-            if (! is_a($storeClass, ModulusStateStore::class, true)) {
-                throw new \InvalidArgumentException(
-                    "Config [modulus.store] class [{$storeClass}] must implement ".ModulusStateStore::class.'.'
-                );
-            }
-
-            if ($storeClass === FileModulusStateStore::class) {
-                $files = $app->bound('files') ? $app['files'] : new Filesystem;
-
-                return FileModulusStateStoreFactory::make($app['config'], $files);
-            }
-
-            $store = $app->make($storeClass);
-
-            if (! $store instanceof ModulusStateStore) {
-                throw new \InvalidArgumentException(
-                    'Resolved [modulus.store] instance must implement '.ModulusStateStore::class.'.'
-                );
-            }
-
-            return $store;
+            return ModulusStateStoreResolver::resolve($app);
         });
     }
 }
