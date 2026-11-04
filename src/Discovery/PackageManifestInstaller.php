@@ -2,6 +2,7 @@
 
 namespace InEngine\Modulus\Discovery;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\PackageManifest;
@@ -52,8 +53,10 @@ final class PackageManifestInstaller
                     $scope = 'modules';
                 }
 
+                // Use a concrete Filesystem: `files` is not bound until after providers register,
+                // and PackageManifest is resolved during RegisterProviders (same as Laravel core).
                 return new FilteringPackageManifest(
-                    $app['files'],
+                    new Filesystem,
                     $app->basePath(),
                     $app->getCachedPackagesPath(),
                     $store,
@@ -112,7 +115,9 @@ final class PackageManifestInstaller
             }
 
             if ($storeClass === FileModulusStateStore::class) {
-                return FileModulusStateStoreFactory::make($app['config'], $app['files']);
+                $files = $app->bound('files') ? $app['files'] : new Filesystem;
+
+                return FileModulusStateStoreFactory::make($app['config'], $files);
             }
 
             $store = $app->make($storeClass);

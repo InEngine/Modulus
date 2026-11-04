@@ -19,6 +19,13 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Early installer Filesystem fix (Step 5 unblock)
+
+- **Branch:** `feat/modulus-state-store`
+- **Done:** `PackageManifestInstaller` constructs `Filesystem` directly (and for state store when `files` unbound) so Core can boot during `RegisterProviders`.
+- **Next:** Step 6 lifecycle hooks; merge branch toward `main` when ready.
+- **Open questions:** None.
+
 ### 2026-11-03 — Step 4b skeleton started (parallel)
 
 - **Branch:** `feat/modulus-state-store` (Step 4 uncommitted polish still local)
