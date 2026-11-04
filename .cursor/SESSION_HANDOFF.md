@@ -19,6 +19,13 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-03 — Checkpoint: through Step 5; next Step 6
+
+- **Branch:** `feat/modulus-state-store` (ahead of origin — push when ready).
+- **Where we are:** Steps **1–5** landed on this branch (state store, discovery filter, repository, handshake, Core host require). Also: `InvalidModulusStateStoreException`, `MissingModuleException` (enabled throw / disabled log), `ModulusStateStoreResolver`, Pest **69** green; doctor missing-module repair planned in Plan Step 9.
+- **Next:** **Step 6** lifecycle hooks + non-destructive rules + migrations on enable. Then deps (7), bus/contracts (8), full Artisan/`modulus:doctor` (9).
+- **Open questions:** Doctor substitute UX; when to merge to `main` / retarget skeleton+Core CI refs.
+
 ### 2026-11-03 — Early installer Filesystem fix (Step 5 unblock)
 
 - **Branch:** `feat/modulus-state-store`

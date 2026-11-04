@@ -19,7 +19,7 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 | Base `ModuleServiceProvider` | Register-with-Modulus; **do not boot unless enabled** (defense in depth) |
 | Lifecycle hooks | Non-destructive disable/uninstall; migrate on enable/upgrade |
 | Events + contracts/DTOs | Inter-module integration |
-| Artisan | list, discover, enable, disable, uninstall, status, **doctor** |
+| Artisan | list, discover, enable, disable, uninstall, status, **doctor** (incl. missing-module list + repair: install / supply source / substitute — Step 9) |
 
 ## Module authoring (required template + guidelines)
 
@@ -61,4 +61,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–4 + 1a complete (handshake hardened). Next: Step 5 Core `require` Modulus + publish config smoke. Extensions and skeleton later.
+Steps 0–5 + handshake + missing-package validation complete. Next: Step 6 lifecycle. Doctor missing-module remediation (install / supply / substitute) planned under Step 9 + `modulus-composer`.
