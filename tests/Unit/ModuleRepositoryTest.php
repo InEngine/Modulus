@@ -3,16 +3,32 @@
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
+use InEngine\Modulus\Contracts\ModuleMigrator;
+use InEngine\Modulus\Contracts\ModulePublisher;
+use InEngine\Modulus\Contracts\ModuleSeeder;
+use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Exceptions\MissingModuleException;
+use InEngine\Modulus\Exceptions\SeedingConfirmationRequiredException;
 use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\State\FileModulusStateStore;
 use Mockery\MockInterface;
 
 /**
- * @return array{0: string, 1: string, 2: ModuleRepository, 3: MockInterface&PackageDiscoverySyncer, 4: MockInterface&InstalledPackageLocator}
+ * @return array{
+ *     0: string,
+ *     1: string,
+ *     2: ModuleRepository,
+ *     3: MockInterface&PackageDiscoverySyncer,
+ *     4: MockInterface&InstalledPackageLocator,
+ *     5: MockInterface&ModuleMigrator,
+ *     6: MockInterface&ModulePublisher,
+ *     7: MockInterface&ModuleSeederRunner,
+ *     8: MockInterface&ModuleLifecycleRunner
+ * }
  */
 function moduleRepositoryFixture(
     array $deny = ['inengine/modulus'],
@@ -27,14 +43,32 @@ function moduleRepositoryFixture(
     if ($installedPackages === null) {
         $installedPackages = Mockery::mock(InstalledPackageLocator::class);
         $installedPackages->shouldReceive('isInstalled')->andReturn(true)->byDefault();
+        $installedPackages->shouldReceive('installPath')->andReturn(null)->byDefault();
+        $installedPackages->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
     }
+
+    $migrator = Mockery::mock(ModuleMigrator::class);
+    $migrator->shouldReceive('migrate')->byDefault();
+
+    $publisher = Mockery::mock(ModulePublisher::class);
+    $publisher->shouldReceive('publish')->byDefault();
+
+    $seeders = Mockery::mock(ModuleSeederRunner::class);
+    $seeders->shouldIgnoreMissing();
+
+    $lifecycle = Mockery::mock(ModuleLifecycleRunner::class);
+    $lifecycle->shouldIgnoreMissing();
 
     return [
         $directory,
         $path,
-        new ModuleRepository($store, $syncer, $installedPackages, $deny),
+        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $deny),
         $syncer,
         $installedPackages,
+        $migrator,
+        $publisher,
+        $seeders,
+        $lifecycle,
     ];
 }
 
@@ -74,8 +108,15 @@ it('registers new packages as disabled by default', function () {
 });
 
 it('enable and disable transition state and sync discovery', function () {
-    [$directory, $path, $repo, $syncer] = moduleRepositoryFixture();
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
     $syncer->shouldReceive('sync')->times(3);
+
+    $lifecycle->shouldReceive('activating')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('activated')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('deactivating')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('deactivated')->once()->with('inengine/alert');
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->once()->with('inengine/alert');
 
     try {
         $repo->register('inengine/alert');
@@ -121,8 +162,11 @@ it('registers denied packages as enabled', function () {
 });
 
 it('forget removes a package and syncs discovery', function () {
-    [$directory, $path, $repo, $syncer] = moduleRepositoryFixture();
+    [$directory, $path, $repo, $syncer, , , , , $lifecycle] = moduleRepositoryFixture();
     $syncer->shouldReceive('sync')->twice();
+
+    $lifecycle->shouldReceive('uninstalling')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('uninstalled')->once()->with('inengine/alert');
 
     try {
         $repo->register('inengine/alert');
@@ -130,6 +174,124 @@ it('forget removes a package and syncs discovery', function () {
 
         expect($repo->all())->toBe([])
             ->and($repo->get('inengine/alert'))->toBeNull();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('uninstall aliases forget', function () {
+    [$directory, $path, $repo, $syncer, , , , , $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->twice();
+
+    $lifecycle->shouldReceive('uninstalling')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('uninstalled')->once()->with('inengine/alert');
+
+    try {
+        $repo->register('inengine/alert');
+        $repo->uninstall('inengine/alert');
+
+        expect($repo->get('inengine/alert'))->toBeNull();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('publish delegates to the module publisher for install/update', function () {
+    [$directory, $path, $repo, , , , $publisher] = moduleRepositoryFixture();
+
+    $publisher->shouldReceive('publish')->once()->with('inengine/alert');
+
+    try {
+        $repo->publish('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('publish throws when the package is not installed', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+
+    [$directory, $path, $repo, , , , $publisher] = moduleRepositoryFixture(installedPackages: $locator);
+    $publisher->shouldReceive('publish')->never();
+
+    try {
+        expect(fn () => $repo->publish('inengine/alert'))
+            ->toThrow(MissingModuleException::class);
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('seed requires confirmation when the module seeder demands it', function () {
+    [$directory, $path, $repo, , , , , $seeders] = moduleRepositoryFixture();
+
+    $seeder = Mockery::mock(ModuleSeeder::class);
+    $seeder->shouldReceive('requiresConfirmation')->andReturn(true);
+    $seeder->shouldReceive('run')->never();
+    $seeders->shouldReceive('resolve')->once()->with('inengine/alert')->andReturn($seeder);
+
+    try {
+        expect(fn () => $repo->seed('inengine/alert'))
+            ->toThrow(SeedingConfirmationRequiredException::class);
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('seed runs after explicit confirmation', function () {
+    [$directory, $path, $repo, , , , , $seeders] = moduleRepositoryFixture();
+
+    $seeder = Mockery::mock(ModuleSeeder::class);
+    $seeder->shouldReceive('requiresConfirmation')->andReturn(true);
+    $seeder->shouldReceive('run')->once();
+    $seeders->shouldReceive('resolve')->once()->with('inengine/alert')->andReturn($seeder);
+
+    try {
+        $repo->seed('inengine/alert', confirmed: true);
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('enable does not invoke the seeder runner', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->times(2);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $migrator->shouldReceive('migrate')->once();
+    $publisher->shouldReceive('publish')->never();
+    $seeders->shouldReceive('resolve')->never();
+
+    try {
+        $repo->enable('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('forget disables an enabled package before uninstall hooks', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    // enable: register sync + enable sync; disable sync; forget sync
+    $syncer->shouldReceive('sync')->times(4);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $lifecycle->shouldReceive('deactivating')->once();
+    $lifecycle->shouldReceive('deactivated')->once();
+    $lifecycle->shouldReceive('uninstalling')->once();
+    $lifecycle->shouldReceive('uninstalled')->once();
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->once();
+
+    try {
+        $repo->enable('inengine/alert');
+        $repo->forget('inengine/alert');
+
+        expect($repo->all())->toBe([]);
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }
@@ -147,9 +309,17 @@ it('refuses to forget packages on the deny list', function () {
 });
 
 it('updates version on re-register without changing enabled flag', function () {
-    [$directory, $path, $repo, $syncer] = moduleRepositoryFixture();
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
     // register (new) + enable (sync) + register (version bump) = 3
     $syncer->shouldReceive('sync')->times(3);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $lifecycle->shouldReceive('upgrading')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('upgraded')->once()->with('inengine/alert');
+    $publisher->shouldReceive('publish')->never();
+    // enable migrate + upgrade migrate
+    $migrator->shouldReceive('migrate')->twice()->with('inengine/alert');
 
     try {
         $repo->register('inengine/alert', '1.0.0');
@@ -173,6 +343,87 @@ it('updates version on re-register without changing enabled flag', function () {
     }
 });
 
+it('does not migrate on version bump when the package is disabled', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->twice();
+
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->never();
+    $lifecycle->shouldReceive('upgrading')->never();
+    $lifecycle->shouldReceive('upgraded')->never();
+
+    try {
+        $repo->register('inengine/alert', '1.0.0');
+        $repo->register('inengine/alert', '1.1.0');
+
+        expect($repo->get('inengine/alert')['version'])->toBe('1.1.0')
+            ->and($repo->isEnabled('inengine/alert'))->toBeFalse();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('re-enable only migrates without re-firing activate hooks', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->times(2);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->twice()->with('inengine/alert');
+
+    try {
+        $repo->enable('inengine/alert');
+        $repo->enable('inengine/alert');
+
+        expect($repo->isEnabled('inengine/alert'))->toBeTrue();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('does not publish or migrate on disable or forget', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->times(4);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $lifecycle->shouldReceive('deactivating')->once();
+    $lifecycle->shouldReceive('deactivated')->once();
+    $lifecycle->shouldReceive('uninstalling')->once();
+    $lifecycle->shouldReceive('uninstalled')->once();
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->once()->with('inengine/alert');
+
+    try {
+        $repo->enable('inengine/alert');
+        $repo->disable('inengine/alert');
+        $repo->forget('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('skips activate hooks when migrate throws during enable', function () {
+    [$directory, $path, $repo, $syncer, , $migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryFixture();
+    $syncer->shouldReceive('sync')->never();
+
+    $lifecycle->shouldReceive('activating')->once()->with('inengine/alert');
+    $lifecycle->shouldReceive('activated')->never();
+    $publisher->shouldReceive('publish')->never();
+    $migrator->shouldReceive('migrate')->once()->andThrow(new RuntimeException('migrate failed'));
+
+    try {
+        expect(fn () => $repo->enable('inengine/alert'))
+            ->toThrow(RuntimeException::class, 'migrate failed');
+
+        expect($repo->isEnabled('inengine/alert'))->toBeFalse()
+            ->and($repo->get('inengine/alert'))->toBeNull();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
 it('resolves the repository from the container and facade', function () {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-repo-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
@@ -185,10 +436,32 @@ it('resolves the repository from the container and facade', function () {
 
         $locator = Mockery::mock(InstalledPackageLocator::class);
         $locator->shouldReceive('isInstalled')->andReturn(true);
+        $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+        $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
         app()->instance(InstalledPackageLocator::class, $locator);
+
+        $migrator = Mockery::mock(ModuleMigrator::class);
+        $migrator->shouldReceive('migrate')->byDefault();
+        app()->instance(ModuleMigrator::class, $migrator);
+
+        $publisher = Mockery::mock(ModulePublisher::class);
+        $publisher->shouldReceive('publish')->byDefault();
+        app()->instance(ModulePublisher::class, $publisher);
+
+        $seeders = Mockery::mock(ModuleSeederRunner::class);
+        $seeders->shouldIgnoreMissing();
+        app()->instance(ModuleSeederRunner::class, $seeders);
+
+        $lifecycle = Mockery::mock(ModuleLifecycleRunner::class);
+        $lifecycle->shouldIgnoreMissing();
+        app()->instance(ModuleLifecycleRunner::class, $lifecycle);
 
         app()->forgetInstance(ModulusStateStore::class);
         app()->forgetInstance(ModuleRepository::class);
+        app()->forgetInstance(ModuleMigrator::class);
+        app()->forgetInstance(ModulePublisher::class);
+        app()->forgetInstance(ModuleSeederRunner::class);
+        app()->forgetInstance(ModuleLifecycleRunner::class);
 
         $repo = app(ModuleRepository::class);
 
@@ -207,6 +480,8 @@ it('resolves the repository from the container and facade', function () {
 it('throws when enabling a package that is not installed', function () {
     $locator = Mockery::mock(InstalledPackageLocator::class);
     $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
 
     [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
 
@@ -221,6 +496,8 @@ it('throws when enabling a package that is not installed', function () {
 it('throws when an enabled tracked package is not installed', function () {
     $locator = Mockery::mock(InstalledPackageLocator::class);
     $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
 
     [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
 
@@ -241,6 +518,8 @@ it('throws when an enabled tracked package is not installed', function () {
 it('logs when a disabled tracked package is not installed', function () {
     $locator = Mockery::mock(InstalledPackageLocator::class);
     $locator->shouldReceive('isInstalled')->with('inengine/alert')->andReturn(false);
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
 
     [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
 

@@ -5,9 +5,17 @@ namespace InEngine\Modulus;
 use InEngine\Modulus\Commands\ModulusCommand;
 use InEngine\Modulus\Composer\ComposerInstalledPackageLocator;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
+use InEngine\Modulus\Contracts\ModuleMigrator;
+use InEngine\Modulus\Contracts\ModulePublisher;
+use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer;
+use InEngine\Modulus\Lifecycle\ResolvingModuleLifecycleRunner;
+use InEngine\Modulus\Migration\PathModuleMigrator;
+use InEngine\Modulus\Publish\PathModulePublisher;
+use InEngine\Modulus\Seeding\ResolvingModuleSeederRunner;
 use InEngine\Modulus\State\ModulusStateStoreResolver;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -29,7 +37,7 @@ class ModulusServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Bind store, discovery syncer, and module repository.
+     * Bind store, discovery syncer, migrator, lifecycle runner, and repository.
      */
     public function packageRegistered(): void
     {
@@ -41,11 +49,35 @@ class ModulusServiceProvider extends PackageServiceProvider
 
         $this->app->singleton(InstalledPackageLocator::class, ComposerInstalledPackageLocator::class);
 
+        $this->app->singleton(ModuleMigrator::class, function ($app): ModuleMigrator {
+            return PathModuleMigrator::fromConfig(
+                $app->make(InstalledPackageLocator::class),
+                $app,
+                $app['config'],
+            );
+        });
+
+        $this->app->singleton(ModulePublisher::class, function ($app): ModulePublisher {
+            return PathModulePublisher::fromConfig(
+                $app->make(InstalledPackageLocator::class),
+                $app->make('files'),
+                $app['config'],
+            );
+        });
+
+        $this->app->singleton(ModuleSeederRunner::class, ResolvingModuleSeederRunner::class);
+
+        $this->app->singleton(ModuleLifecycleRunner::class, ResolvingModuleLifecycleRunner::class);
+
         $this->app->singleton(ModuleRepository::class, function ($app): ModuleRepository {
             return ModuleRepository::fromConfig(
                 $app->make(ModulusStateStore::class),
                 $app->make(PackageDiscoverySyncer::class),
                 $app->make(InstalledPackageLocator::class),
+                $app->make(ModuleMigrator::class),
+                $app->make(ModulePublisher::class),
+                $app->make(ModuleSeederRunner::class),
+                $app->make(ModuleLifecycleRunner::class),
                 $app['config'],
             );
         });

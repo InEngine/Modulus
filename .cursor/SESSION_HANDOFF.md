@@ -19,6 +19,21 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-17 — Step 6: publish on install; seed explicit + confirmed
+
+- **Branch:** `feat/modulus-state-store` (uncommitted — review before commit).
+- **Done:** `Modulus::publish()` for install (composer); enable = migrate + hooks only. `Modulus::seed($pkg, confirmed: true)` only — skeleton `ModuleSeeder` always `requiresConfirmation(): true`; never seed on enable. Dist assets on publish; UI overrides opt-in. Idempotent migration stub.
+- **Tests:** run full suite after seed seam.
+- **Next:** Review/commit Step 6 → Step 7; Step 9 `modulus:seed` prompt; Step 10 composer→publish.
+- **Open questions:** Path-dev manual `Modulus::publish()` when UI assets needed before enable.
+
+### 2026-11-17 — Step 6 lifecycle + migrations (Atlas)
+
+- **Branch:** `feat/modulus-state-store` (superseded by publish/idempotent follow-up above).
+- **Done:** Initial Step 6 hooks + migrate pipeline (see newer entry).
+- **Next:** (see newer entry)
+- **Open questions:** None.
+
 ### 2026-11-03 — Checkpoint: through Step 5; next Step 6
 
 - **Branch:** `feat/modulus-state-store` (ahead of origin — push when ready).

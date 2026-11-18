@@ -17,7 +17,10 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 | `FilteringPackageManifest` | Read-time omit of disabled tracked packages from discovery |
 | `PackageManifestInstaller` | Early `beforeBootstrapping(RegisterProviders)` rebind (host must call) |
 | Base `ModuleServiceProvider` | Register-with-Modulus; **do not boot unless enabled** (defense in depth) |
-| Lifecycle hooks | Non-destructive disable/uninstall; migrate on enable/upgrade |
+| Lifecycle hooks | `ModuleLifecycle` on base provider; `ResolvingModuleLifecycleRunner` instantiates provider from Composer extra without Laravel-registering it |
+| `PathModulePublisher` | **Install/update** via `ModuleRepository::publish()` (modulus-composer): config + public assets by default; views/lang/inertia opt-in overrides |
+| `PathModuleMigrator` | Pending migrations from `{installPath}/database/migrations` on enable / version-bump upgrade only |
+| `ModuleSeeder` / `seed()` | Explicit only: `Modulus::seed($pkg, confirmed: true)`; skeleton seeder always requires confirmation; never on enable |
 | Events + contracts/DTOs | Inter-module integration |
 | Artisan | list, discover, enable, disable, uninstall, status, **doctor** (incl. missing-module list + repair: install / supply source / substitute — Step 9) |
 
@@ -61,4 +64,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–5 + handshake + missing-package validation complete. Next: Step 6 lifecycle. Doctor missing-module remediation (install / supply / substitute) planned under Step 9 + `modulus-composer`.
+Steps 0–6 complete (lifecycle, migrate-on-enable, non-destructive forget, `publish()` for install, `seed()` with confirmation). Publish ≠ enable; seed ≠ enable. Skeleton ships idempotent migrations + confirming `ModuleSeeder`. Next: Step 7 deps → … → Step 9 `modulus:seed` prompt → Step 10 composer→publish.

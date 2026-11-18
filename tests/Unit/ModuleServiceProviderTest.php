@@ -1,6 +1,10 @@
 <?php
 
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
+use InEngine\Modulus\Contracts\ModuleMigrator;
+use InEngine\Modulus\Contracts\ModulePublisher;
+use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\ModuleServiceProvider;
@@ -56,10 +60,16 @@ function prepareModulusStatePath(): string
 
     $locator = Mockery::mock(InstalledPackageLocator::class);
     $locator->shouldReceive('isInstalled')->andReturn(true);
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
     app()->instance(InstalledPackageLocator::class, $locator);
 
     app()->forgetInstance(ModuleRepository::class);
     app()->forgetInstance(ModulusStateStore::class);
+    app()->forgetInstance(ModuleMigrator::class);
+    app()->forgetInstance(ModulePublisher::class);
+    app()->forgetInstance(ModuleSeederRunner::class);
+    app()->forgetInstance(ModuleLifecycleRunner::class);
 
     return $path;
 }

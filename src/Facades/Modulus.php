@@ -12,9 +12,12 @@ use InEngine\Modulus\ModuleRepository;
  * @method static array|null get(string $package)
  * @method static bool isEnabled(string $package)
  * @method static void register(string $package, string|null $version = null)
+ * @method static void publish(string $package)
+ * @method static void seed(string $package, bool $confirmed = false)
  * @method static void enable(string $package)
  * @method static void disable(string $package)
  * @method static void forget(string $package)
+ * @method static void uninstall(string $package)
  * @method static void validateTrackedPackages()
  * @method static bool isDenied(string $package)
  *

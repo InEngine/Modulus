@@ -32,5 +32,9 @@ Do **not** put Composer hooks, marketplace, or operator UI into `inengine/modulu
 6. Do not shell out to Composer to install sibling modules — that is `modulus-composer` / marketplace.
 7. Ship capability descriptor stubs for `modulus-inspect`.
 8. SemVer + Pint + Pest + PHPStan; CLI/API first; non-destructive disable/uninstall.
+9. Keep Spatie layouts: `config/`, `resources/dist` (public assets), `database/migrations`, `database/seeders/ModuleSeeder.php`. `Modulus::publish()` runs on **install/update** (modulus-composer), not enable. Enable runs migrations + boot only.
+10. Migrations must be idempotent for leftover tables (`Schema::hasTable` before `create`) because uninstall does not drop schema by default.
+11. UI: ship assets under `resources/dist` for publish-to-public; load Blade/lang/Inertia from the package by default. Operator Modulus chrome belongs in `inengine/modulus-ui`, not feature modules.
+12. Seed only via `Modulus::seed($package, confirmed: true)`. Skeleton `ModuleSeeder::requiresConfirmation()` is always true — never seed on enable/install.
 
 Canonical detail: Documentation `Plan and Design.md` (extensions + “Guidelines for Modulus-compatible feature modules”).

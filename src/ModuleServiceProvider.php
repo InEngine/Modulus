@@ -2,6 +2,8 @@
 
 namespace InEngine\Modulus;
 
+use InEngine\Modulus\Contracts\ModuleLifecycle;
+use InEngine\Modulus\Contracts\ModuleSeeder;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 /**
@@ -18,8 +20,16 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
  *
  * Primary load gating remains PackageManifest filtering; this handshake covers stale
  * discovery cache or a manually registered provider.
+ *
+ * Lifecycle (Step 6): override the {@see ModuleLifecycle} methods for activate /
+ * deactivate / uninstall / upgrade side effects. Keep deactivate/uninstall
+ * non-destructive; put schema changes in migrations (run on enable/upgrade).
+ * Config/assets publish is {@see ModuleRepository::publish()} for install
+ * (modulus-composer), not enable — Install ≠ enable.
+ * Data seeders run only via {@see ModuleRepository::seed()} with confirmation —
+ * never on enable. Skeleton modules must override {@see modulusSeederClass()}.
  */
-abstract class ModuleServiceProvider extends PackageServiceProvider
+abstract class ModuleServiceProvider extends PackageServiceProvider implements ModuleLifecycle
 {
     /**
      * Composer package name, e.g. "inengine/alert".
@@ -30,6 +40,19 @@ abstract class ModuleServiceProvider extends PackageServiceProvider
      * Optional Composer version string passed to Modulus on register.
      */
     protected function modulusPackageVersion(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * FQCN of this module's {@see ModuleSeeder}.
+     *
+     * Skeleton modules return Database\Seeders\ModuleSeeder. Null means
+     * {@see ModuleRepository::seed()} will fail with ModuleSeederMissingException.
+     *
+     * @return class-string<ModuleSeeder>|null
+     */
+    public function modulusSeederClass(): ?string
     {
         return null;
     }
@@ -115,5 +138,77 @@ abstract class ModuleServiceProvider extends PackageServiceProvider
     protected function modulusRepository(): ModuleRepository
     {
         return $this->app->make(ModuleRepository::class);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Override for pre-enable work (defaults, cache warm). Migrations run separately.
+     */
+    public function activating(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function activated(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Temp cleanup only — do not drop tables or wipe module storage.
+     */
+    public function deactivating(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function deactivated(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Non-destructive: Composer remove is owned by modulus-composer, not this hook.
+     */
+    public function uninstalling(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function uninstalled(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Override for pre-upgrade work. Pending migrations run after this hook.
+     */
+    public function upgrading(string $package): void
+    {
+        //
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function upgraded(string $package): void
+    {
+        //
     }
 }

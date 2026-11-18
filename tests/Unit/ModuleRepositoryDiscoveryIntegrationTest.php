@@ -2,11 +2,35 @@
 
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
+use InEngine\Modulus\Contracts\ModuleMigrator;
+use InEngine\Modulus\Contracts\ModulePublisher;
+use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer;
 use InEngine\Modulus\Discovery\FilteringPackageManifest;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\State\FileModulusStateStore;
+
+/**
+ * @return array{0: ModuleMigrator, 1: ModulePublisher, 2: ModuleSeederRunner, 3: ModuleLifecycleRunner}
+ */
+function moduleRepositoryLifecycleDoubles(): array
+{
+    $migrator = Mockery::mock(ModuleMigrator::class);
+    $migrator->shouldReceive('migrate')->byDefault();
+
+    $publisher = Mockery::mock(ModulePublisher::class);
+    $publisher->shouldReceive('publish')->byDefault();
+
+    $seeders = Mockery::mock(ModuleSeederRunner::class);
+    $seeders->shouldIgnoreMissing();
+
+    $lifecycle = Mockery::mock(ModuleLifecycleRunner::class);
+    $lifecycle->shouldIgnoreMissing();
+
+    return [$migrator, $publisher, $seeders, $lifecycle];
+}
 
 it('enable and disable change filtered providers after discovery sync', function () {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-integ-'.uniqid('', true);
@@ -30,7 +54,10 @@ it('enable and disable change filtered providers after discovery sync', function
     $syncer = new FilteringPackageDiscoverySyncer(app());
     $installed = Mockery::mock(InstalledPackageLocator::class);
     $installed->shouldReceive('isInstalled')->andReturn(true);
-    $repo = new ModuleRepository($store, $syncer, $installed, ['inengine/modulus']);
+    $installed->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $installed->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    [$migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryLifecycleDoubles();
+    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, ['inengine/modulus']);
 
     $makeManifest = function () use ($directory, $packagesPath, $store): FilteringPackageManifest {
         return new FilteringPackageManifest(
@@ -82,8 +109,11 @@ it('discovery syncer is invoked by repository toggles', function () {
     $syncer->shouldReceive('sync')->times(3);
     $installed = Mockery::mock(InstalledPackageLocator::class);
     $installed->shouldReceive('isInstalled')->andReturn(true);
+    $installed->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $installed->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    [$migrator, $publisher, $seeders, $lifecycle] = moduleRepositoryLifecycleDoubles();
 
-    $repo = new ModuleRepository($store, $syncer, $installed, ['inengine/modulus']);
+    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, ['inengine/modulus']);
 
     try {
         $repo->enable('inengine/alert');
