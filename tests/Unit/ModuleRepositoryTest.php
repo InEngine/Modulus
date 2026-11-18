@@ -3,6 +3,7 @@
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
 use InEngine\Modulus\Contracts\ModuleMigrator;
 use InEngine\Modulus\Contracts\ModulePublisher;
@@ -11,7 +12,9 @@ use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Exceptions\MissingModuleException;
+use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\SeedingConfirmationRequiredException;
+use InEngine\Modulus\Exceptions\UnmetModuleDependencyException;
 use InEngine\Modulus\Facades\Modulus as ModulusFacade;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\State\FileModulusStateStore;
@@ -27,12 +30,14 @@ use Mockery\MockInterface;
  *     5: MockInterface&ModuleMigrator,
  *     6: MockInterface&ModulePublisher,
  *     7: MockInterface&ModuleSeederRunner,
- *     8: MockInterface&ModuleLifecycleRunner
+ *     8: MockInterface&ModuleLifecycleRunner,
+ *     9: MockInterface&ModuleDependencyGuard
  * }
  */
 function moduleRepositoryFixture(
     array $deny = ['inengine/modulus'],
     ?InstalledPackageLocator $installedPackages = null,
+    ?ModuleDependencyGuard $dependencies = null,
 ): array {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-repo-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
@@ -45,6 +50,7 @@ function moduleRepositoryFixture(
         $installedPackages->shouldReceive('isInstalled')->andReturn(true)->byDefault();
         $installedPackages->shouldReceive('installPath')->andReturn(null)->byDefault();
         $installedPackages->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+        $installedPackages->shouldReceive('composerRequires')->andReturn([])->byDefault();
     }
 
     $migrator = Mockery::mock(ModuleMigrator::class);
@@ -59,16 +65,23 @@ function moduleRepositoryFixture(
     $lifecycle = Mockery::mock(ModuleLifecycleRunner::class);
     $lifecycle->shouldIgnoreMissing();
 
+    if ($dependencies === null) {
+        $dependencies = Mockery::mock(ModuleDependencyGuard::class);
+        $dependencies->shouldReceive('assertCanEnable')->byDefault();
+        $dependencies->shouldReceive('assertCanDisable')->byDefault();
+    }
+
     return [
         $directory,
         $path,
-        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $deny),
+        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $deny),
         $syncer,
         $installedPackages,
         $migrator,
         $publisher,
         $seeders,
         $lifecycle,
+        $dependencies,
     ];
 }
 
@@ -538,6 +551,81 @@ it('logs when a disabled tracked package is not installed', function () {
         $repo->validateTrackedPackages();
 
         expect($repo->isEnabled('inengine/alert'))->toBeFalse();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('refuses to enable when dependency guard reports unmet requires', function () {
+    $dependencies = Mockery::mock(ModuleDependencyGuard::class);
+    $dependencies->shouldReceive('assertCanEnable')
+        ->once()
+        ->with('inengine/alert')
+        ->andThrow(new UnmetModuleDependencyException(
+            'inengine/alert',
+            missingPackages: ['guzzlehttp/guzzle'],
+            disabledModules: ['inengine/users'],
+        ));
+    $dependencies->shouldReceive('assertCanDisable')->byDefault();
+
+    [$directory, $path, $repo, $syncer, , $migrator, , , $lifecycle] = moduleRepositoryFixture(dependencies: $dependencies);
+
+    $lifecycle->shouldReceive('activating')->never();
+    $migrator->shouldReceive('migrate')->never();
+    $syncer->shouldReceive('sync')->never();
+
+    try {
+        expect(fn () => $repo->enable('inengine/alert'))
+            ->toThrow(UnmetModuleDependencyException::class, 'Cannot enable [inengine/alert]');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('refuses to disable when dependency guard reports enabled dependents', function () {
+    $dependencies = Mockery::mock(ModuleDependencyGuard::class);
+    $dependencies->shouldReceive('assertCanEnable')->byDefault();
+    $dependencies->shouldReceive('assertCanDisable')
+        ->once()
+        ->with('inengine/users')
+        ->andThrow(new ModuleHasDependentsException('inengine/users', ['inengine/alert']));
+
+    [$directory, $path, $repo, $syncer, , , , , $lifecycle] = moduleRepositoryFixture(dependencies: $dependencies);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $lifecycle->shouldReceive('deactivating')->never();
+    $syncer->shouldReceive('sync')->twice();
+
+    try {
+        $repo->enable('inengine/users');
+
+        expect(fn () => $repo->disable('inengine/users'))
+            ->toThrow(ModuleHasDependentsException::class, 'enabled dependents');
+        expect($repo->isEnabled('inengine/users'))->toBeTrue();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('refuses to forget when dependency guard reports enabled dependents', function () {
+    $dependencies = Mockery::mock(ModuleDependencyGuard::class);
+    $dependencies->shouldReceive('assertCanEnable')->byDefault();
+    $dependencies->shouldReceive('assertCanDisable')
+        ->once()
+        ->with('inengine/users')
+        ->andThrow(new ModuleHasDependentsException('inengine/users', ['inengine/alert']));
+
+    [$directory, $path, $repo, , , , , , $lifecycle] = moduleRepositoryFixture(dependencies: $dependencies);
+
+    $lifecycle->shouldReceive('uninstalling')->never();
+
+    try {
+        $repo->register('inengine/users');
+
+        expect(fn () => $repo->forget('inengine/users'))
+            ->toThrow(ModuleHasDependentsException::class);
+        expect($repo->get('inengine/users'))->not->toBeNull();
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }

@@ -14,6 +14,7 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 |-------|------|
 | `ModulusStateStore` | Atomic temp-write + swap of enabled/disabled state (swappable via `modulus.store`) |
 | Repository / orchestrator | Enable, disable, uninstall, deps; list known enabled **and** disabled |
+| `ModuleDependencyGuard` | Composer `require` graph: Modulus deps must be enabled; non-Modulus deps installed-only |
 | `FilteringPackageManifest` | Read-time omit of disabled tracked packages from discovery |
 | `PackageManifestInstaller` | Early `beforeBootstrapping(RegisterProviders)` rebind (host must call) |
 | Base `ModuleServiceProvider` | Register-with-Modulus; **do not boot unless enabled** (defense in depth) |
@@ -62,6 +63,13 @@ Feature modules remain `inengine/{feature}`, not `modulus-*`.
 
 SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
+## Dependencies (Step 7)
+
+- Source: installed package `composer.json` `require` (not capability tokens).  
+- Modulus module among requires → must be installed and enabled (deny-list always enabled).  
+- Plain Composer package among requires → must be installed only; still uses **normal Laravel discovery / vendor:publish**. Modules may optionally reach down on enable for extra config / `public/vendor` dist / migrations.  
+- Disable / forget blocked while any **enabled** module lists the package in its `require`.
+
 ## Status
 
-Steps 0–6 complete (lifecycle, migrate-on-enable, non-destructive forget, `publish()` for install, `seed()` with confirmation). Publish ≠ enable; seed ≠ enable. Skeleton ships idempotent migrations + confirming `ModuleSeeder`. Next: Step 7 deps → … → Step 9 `modulus:seed` prompt → Step 10 composer→publish.
+Steps 0–7 complete (deps guard + skeleton reach-down docs). Next: Step 8 events/contracts → Step 9 Artisan/`modulus:doctor` → Step 10 `modulus-composer`→publish.

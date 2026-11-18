@@ -28,6 +28,12 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
  * (modulus-composer), not enable — Install ≠ enable.
  * Data seeders run only via {@see ModuleRepository::seed()} with confirmation —
  * never on enable. Skeleton modules must override {@see modulusSeederClass()}.
+ *
+ * Dependencies (Step 7): Composer `require` is checked by Modulus. Required
+ * Modulus modules must already be enabled; plain Composer packages need only
+ * be installed and still use normal Laravel discovery/publish. Modules may
+ * optionally reach down from `activating()` to also ensure config, UI dist,
+ * or migrations for those deps.
  */
 abstract class ModuleServiceProvider extends PackageServiceProvider implements ModuleLifecycle
 {

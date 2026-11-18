@@ -5,6 +5,7 @@ namespace InEngine\Modulus;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Support\Facades\Log;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
 use InEngine\Modulus\Contracts\ModuleMigrator;
 use InEngine\Modulus\Contracts\ModulePublisher;
@@ -13,8 +14,10 @@ use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Exceptions\MissingModuleException;
+use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\ModuleSeederMissingException;
 use InEngine\Modulus\Exceptions\SeedingConfirmationRequiredException;
+use InEngine\Modulus\Exceptions\UnmetModuleDependencyException;
 
 /**
  * Orchestrates module registration, lifecycle, publish, migrations, seed, and toggles.
@@ -23,12 +26,16 @@ use InEngine\Modulus\Exceptions\SeedingConfirmationRequiredException;
  * publisher, migrator, seeder runner, lifecycle runner, or discovery syncer directly.
  *
  * Step 6 pipeline (non-destructive disable / forget):
- * - enable: activating → migrate → state enabled → sync → activated
- * - disable: deactivating → state disabled → sync → deactivated
- * - forget / uninstall: disable if needed → uninstalling → remove state → sync → uninstalled
+ * - enable: dependency check → activating → migrate → state enabled → sync → activated
+ * - disable: dependent check → deactivating → state disabled → sync → deactivated
+ * - forget / uninstall: dependent check → disable if needed → uninstalling → remove state → sync → uninstalled
  * - register version bump while enabled: upgrading → migrate → upgraded
  * - publish: explicit {@see publish()} for install/update — owned by modulus-composer
  * - seed: explicit {@see seed()} with confirmation — never on enable/install
+ *
+ * Step 7 deps: Composer `require` is the hard graph. Modulus modules among
+ * requires must be enabled; plain Composer packages must only be installed
+ * (the feature module bootstraps their publish/migrate in lifecycle hooks).
  *
  * Composer require/remove stays in inengine/modulus-composer (Step 10). That
  * extension should call {@see publish()} after acquire/update (and before enable).
@@ -48,6 +55,7 @@ class ModuleRepository
         protected ModulePublisher $publisher,
         protected ModuleSeederRunner $seeders,
         protected ModuleLifecycleRunner $lifecycle,
+        protected ModuleDependencyGuard $dependencies,
         protected array $deny = ['inengine/modulus'],
     ) {}
 
@@ -62,6 +70,7 @@ class ModuleRepository
         ModulePublisher $publisher,
         ModuleSeederRunner $seeders,
         ModuleLifecycleRunner $lifecycle,
+        ModuleDependencyGuard $dependencies,
         ConfigRepository $config,
     ): self {
         $deny = $config->get('modulus.discovery.deny', ['inengine/modulus']);
@@ -73,7 +82,7 @@ class ModuleRepository
         /** @var list<string> $denyList */
         $denyList = array_values(array_filter($deny, 'is_string'));
 
-        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $denyList);
+        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $denyList);
     }
 
     /**
@@ -219,6 +228,7 @@ class ModuleRepository
      * Does **not** seed — call {@see seed()} with confirmation explicitly.
      *
      * @throws MissingModuleException When the Composer package is not installed.
+     * @throws UnmetModuleDependencyException When Composer requires are unmet.
      */
     public function enable(string $package): void
     {
@@ -236,6 +246,7 @@ class ModuleRepository
             return;
         }
 
+        $this->dependencies->assertCanEnable($package);
         $this->lifecycle->activating($package);
         $this->migrator->migrate($package);
         $this->register($package);
@@ -297,6 +308,7 @@ class ModuleRepository
      * Already-disabled packages are a no-op after ensuring they are tracked.
      *
      * @throws \InvalidArgumentException
+     * @throws ModuleHasDependentsException When enabled modules still require this package.
      */
     public function disable(string $package): void
     {
@@ -312,6 +324,7 @@ class ModuleRepository
             return;
         }
 
+        $this->dependencies->assertCanDisable($package);
         $this->lifecycle->deactivating($package);
         $this->store->setEnabled($package, false);
         $this->discovery->sync();
@@ -325,6 +338,7 @@ class ModuleRepository
      * first. Composer remove belongs to inengine/modulus-composer.
      *
      * @throws \InvalidArgumentException
+     * @throws ModuleHasDependentsException When enabled modules still require this package.
      */
     public function forget(string $package): void
     {
@@ -338,8 +352,15 @@ class ModuleRepository
             return;
         }
 
+        // Dependents block forget even when already disabled — state removal would
+        // leave enabled dependents with a Composer require Modulus no longer tracks.
+        $this->dependencies->assertCanDisable($package);
+
         if ($this->store->isEnabled($package)) {
-            $this->disable($package);
+            $this->lifecycle->deactivating($package);
+            $this->store->setEnabled($package, false);
+            $this->discovery->sync();
+            $this->lifecycle->deactivated($package);
         }
 
         $this->lifecycle->uninstalling($package);

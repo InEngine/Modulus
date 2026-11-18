@@ -4,6 +4,13 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+### Step 7 — Module dependencies
+
+- `ModuleDependencyGuard` / `ComposerModuleDependencyGuard`: Composer `require` graph on enable / disable / forget
+- Modulus modules among requires must be enabled; non-Modulus packages must only be installed
+- `UnmetModuleDependencyException`, `ModuleHasDependentsException`
+- `InstalledPackageLocator::composerRequires()` (skips platform php/ext/lib/composer-*)
+
 ### Step 6 — Lifecycle, publish, seed
 
 - Lifecycle hooks on `ModuleServiceProvider` (`activating` / `activated` / `deactivating` / `deactivated` / `uninstalling` / `uninstalled` / `upgrading` / `upgraded`) via `ResolvingModuleLifecycleRunner`

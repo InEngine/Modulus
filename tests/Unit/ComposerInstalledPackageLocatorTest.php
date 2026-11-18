@@ -30,5 +30,16 @@ it('returns null path and empty providers for unknown packages', function () {
 
     expect($locator->isInstalled($missing))->toBeFalse()
         ->and($locator->installPath($missing))->toBeNull()
-        ->and($locator->laravelProviderClasses($missing))->toBe([]);
+        ->and($locator->laravelProviderClasses($missing))->toBe([])
+        ->and($locator->composerRequires($missing))->toBe([]);
+});
+
+it('reads non-platform composer requires for an installed package', function () {
+    $locator = new ComposerInstalledPackageLocator;
+
+    $requires = $locator->composerRequires('inengine/modulus');
+
+    expect($requires)->toContain('illuminate/contracts')
+        ->and($requires)->not->toContain('php')
+        ->and($requires)->not->toContain('ext-json');
 });

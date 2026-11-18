@@ -27,4 +27,14 @@ interface InstalledPackageLocator
      * @return list<class-string>
      */
     public function laravelProviderClasses(string $package): array;
+
+    /**
+     * Non-platform package names from the package's composer.json `require`.
+     *
+     * Skips php / ext-* / lib-* / hhvm / composer-* platform constraints.
+     * Does not include require-dev.
+     *
+     * @return list<string>
+     */
+    public function composerRequires(string $package): array;
 }
