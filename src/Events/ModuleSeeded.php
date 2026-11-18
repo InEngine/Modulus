@@ -2,8 +2,10 @@
 
 namespace InEngine\Modulus\Events;
 
+use InEngine\Modulus\ModuleRepository;
+
 /**
- * A module seeder finished after explicit confirmed {@see \InEngine\Modulus\ModuleRepository::seed()}.
+ * A module seeder finished after explicit confirmed {@see ModuleRepository::seed()}.
  */
 final readonly class ModuleSeeded
 {

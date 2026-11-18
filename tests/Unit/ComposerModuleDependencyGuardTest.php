@@ -6,9 +6,10 @@ use InEngine\Modulus\Dependencies\ComposerModuleDependencyGuard;
 use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\UnmetModuleDependencyException;
 use InEngine\Modulus\State\FileModulusStateStore;
+use Mockery\MockInterface;
 
 /**
- * @return array{0: string, 1: string, 2: FileModulusStateStore, 3: ComposerModuleDependencyGuard, 4: InstalledPackageLocator&\Mockery\MockInterface}
+ * @return array{0: string, 1: string, 2: FileModulusStateStore, 3: ComposerModuleDependencyGuard, 4: InstalledPackageLocator&MockInterface}
  */
 function dependencyGuardFixture(): array
 {

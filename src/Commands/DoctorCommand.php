@@ -3,8 +3,8 @@
 namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
-use InEngine\Modulus\Diagnostics\ModulusDoctor;
 use InEngine\Modulus\DataTransferObjects\DoctorFinding;
+use InEngine\Modulus\Diagnostics\ModulusDoctor;
 
 class DoctorCommand extends Command
 {
