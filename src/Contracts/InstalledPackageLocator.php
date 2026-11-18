@@ -37,4 +37,21 @@ interface InstalledPackageLocator
      * @return list<string>
      */
     public function composerRequires(string $package): array;
+
+    /**
+     * All installed Composer package names known to the runtime.
+     *
+     * @return list<string>
+     */
+    public function installedPackageNames(): array;
+
+    /**
+     * Pretty or raw installed version string, or null when unknown.
+     */
+    public function version(string $package): ?string;
+
+    /**
+     * Host root composer.json `require` constraint for a package, if present.
+     */
+    public function rootConstraint(string $package): ?string;
 }

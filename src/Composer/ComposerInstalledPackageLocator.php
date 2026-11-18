@@ -101,6 +101,78 @@ final class ComposerInstalledPackageLocator implements InstalledPackageLocator
     }
 
     /**
+     * {@inheritdoc}
+     *
+     * @return list<string>
+     */
+    public function installedPackageNames(): array
+    {
+        if (! class_exists(InstalledVersions::class)) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach (InstalledVersions::getInstalledPackages() as $name) {
+            if ($name !== '' && str_contains($name, '/')) {
+                $names[] = $name;
+            }
+        }
+
+        $names = array_values(array_unique($names));
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function version(string $package): ?string
+    {
+        if (! class_exists(InstalledVersions::class) || ! InstalledVersions::isInstalled($package)) {
+            return null;
+        }
+
+        $pretty = InstalledVersions::getPrettyVersion($package);
+
+        if (is_string($pretty) && $pretty !== '') {
+            return $pretty;
+        }
+
+        $version = InstalledVersions::getVersion($package);
+
+        return is_string($version) && $version !== '' ? $version : null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rootConstraint(string $package): ?string
+    {
+        $rootPath = $this->rootComposerPath();
+
+        if ($rootPath === null) {
+            return null;
+        }
+
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode((string) file_get_contents($rootPath), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $require = $decoded['require'][$package] ?? null;
+
+        return is_string($require) && $require !== '' ? $require : null;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function composerJson(string $package): ?array
@@ -125,6 +197,24 @@ final class ComposerInstalledPackageLocator implements InstalledPackageLocator
         }
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function rootComposerPath(): ?string
+    {
+        if (! class_exists(InstalledVersions::class)) {
+            return null;
+        }
+
+        $root = InstalledVersions::getRootPackage();
+        $installPath = $root['install_path'];
+
+        if ($installPath === '') {
+            return null;
+        }
+
+        $composerFile = rtrim($installPath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'composer.json';
+
+        return is_file($composerFile) ? $composerFile : null;
     }
 
     private function isPlatformRequirement(string $name): bool

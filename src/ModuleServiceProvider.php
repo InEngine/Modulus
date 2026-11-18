@@ -2,6 +2,7 @@
 
 namespace InEngine\Modulus;
 
+use Composer\InstalledVersions;
 use InEngine\Modulus\Contracts\ModuleLifecycle;
 use InEngine\Modulus\Contracts\ModuleSeeder;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -43,11 +44,47 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
     abstract protected function modulusPackageName(): string;
 
     /**
-     * Optional Composer version string passed to Modulus on register.
+     * Composer version string passed to Modulus on register.
+     *
+     * Defaults to the installed Composer pretty version so enabled modules
+     * auto-apply upgrades (migrate + hooks) on first boot after `composer update`
+     * when {@see config('modulus.upgrades.auto_apply_installed')} is true.
+     * Override to pin a different reported version if needed.
      */
     protected function modulusPackageVersion(): ?string
     {
-        return null;
+        if (config('modulus.upgrades.auto_apply_installed', true) === false) {
+            return null;
+        }
+
+        $package = $this->modulusPackageName();
+
+        if (! class_exists(InstalledVersions::class) || ! InstalledVersions::isInstalled($package)) {
+            return null;
+        }
+
+        $pretty = InstalledVersions::getPrettyVersion($package);
+
+        if (is_string($pretty) && $pretty !== '') {
+            return $pretty;
+        }
+
+        $version = InstalledVersions::getVersion($package);
+
+        return is_string($version) && $version !== '' ? $version : null;
+    }
+
+    /**
+     * Post-upgrade / operator checklist items for modulus-ui and `modulus:doctor`.
+     *
+     * Return human-readable steps that need manual attention after an upgrade
+     * (config review, feature flags, data backfill, etc.). Empty by default.
+     *
+     * @return list<string>
+     */
+    public function modulusManualAttentionItems(): array
+    {
+        return [];
     }
 
     /**

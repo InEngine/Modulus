@@ -83,6 +83,13 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 - Boost package guidelines/skills under `resources/boost/` (loaded by host `boost:update` when `inengine/modulus` is in `boost.json` packages).
 - Repo-local: `AGENTS.md`, `.ai/guidelines/`.
 
+## Artisan + upgrades (Step 9)
+
+- Full `modulus:*` CLI; doctor findings structured for modulus-ui.
+- Default constraint policy **patch** (`~x.y.z`); approve minor/major via UI/CLI + modulus-composer.
+- Enabled modules auto-upgrade schema/hooks when installed version changes on boot.
+- Update notices: `modulus:outdated` / `ModuleUpdateAvailable` / doctor `update_available`; optional `modulus:update --auto` for patch-within-constraint when `auto_patch` + real applier.
+
 ## Status
 
-Steps 0–8 + **8b** complete. Next: Step 9 Artisan/`modulus:doctor` → Step 10 `modulus-composer`→publish.
+Steps 0–9 + **8b** complete (incl. update-notice seams). Next: Step 10 `modulus-composer` (constraint rewrite, real `ModuleUpdateApplier`, post-update publish) → modulus-ui notification UI.

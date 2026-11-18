@@ -66,6 +66,9 @@ it('enable and disable change filtered providers after discovery sync', function
     $installed->shouldReceive('installPath')->andReturn(null)->byDefault();
     $installed->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
     $installed->shouldReceive('composerRequires')->andReturn([])->byDefault();
+    $installed->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+    $installed->shouldReceive('version')->andReturn(null)->byDefault();
+    $installed->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
     [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events] = moduleRepositoryLifecycleDoubles();
     $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, ['inengine/modulus']);
 
@@ -122,6 +125,9 @@ it('discovery syncer is invoked by repository toggles', function () {
     $installed->shouldReceive('installPath')->andReturn(null)->byDefault();
     $installed->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
     $installed->shouldReceive('composerRequires')->andReturn([])->byDefault();
+    $installed->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+    $installed->shouldReceive('version')->andReturn(null)->byDefault();
+    $installed->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
     [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events] = moduleRepositoryLifecycleDoubles();
 
     $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, ['inengine/modulus']);

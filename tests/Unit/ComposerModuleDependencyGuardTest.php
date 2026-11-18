@@ -20,6 +20,9 @@ function dependencyGuardFixture(): array
     $locator->shouldReceive('isInstalled')->andReturn(true)->byDefault();
     $locator->shouldReceive('composerRequires')->andReturn([])->byDefault();
     $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    $locator->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+    $locator->shouldReceive('version')->andReturn(null)->byDefault();
+    $locator->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
 
     $guard = new ComposerModuleDependencyGuard($store, $locator, ['inengine/modulus']);
 

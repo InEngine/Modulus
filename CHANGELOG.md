@@ -4,6 +4,18 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+### Step 9 — Artisan surface, doctor, upgrades + update notices
+
+- Commands: `modulus:list|discover|enable|disable|uninstall|status|publish|seed|upgrade|outdated|update|doctor`
+- `ModuleRepository::discover()`, `upgrade()`, `upgradeAll()`
+- Auto-apply installed Composer version on enabled-module handshake (`modulusPackageVersion()` default)
+- SemVer policy config `modulus.upgrades` (default `patch` → `~x.y.z`); doctor warns on looser host constraints
+- Available-update notices: `ModuleUpdateChecker` / `ModuleUpdateAvailable` / `modulus:outdated` for CLI + modulus-ui
+- Optional non-breaking auto-patch via `modulus.updates.auto_patch` + `ModuleUpdateApplier` (`modulus:update --auto`; Null until modulus-composer)
+- `ModulusDoctor` + `DoctorReport`/`DoctorFinding` (incl. `update_available`) for CLI and modulus-ui
+- `ModuleManualAttentionRequired` + `modulusManualAttentionItems()` for post-upgrade operator checklists
+- `modulus:upgrade --approve=` messages constraint bump (Composer rewrite stays modulus-composer / UI)
+
 ### Step 8b — Laravel Boost agent guidelines
 
 - `resources/boost/guidelines/core.blade.php` + `resources/boost/skills/modulus-modules` for consuming hosts

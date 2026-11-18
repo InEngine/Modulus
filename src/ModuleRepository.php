@@ -18,6 +18,7 @@ use InEngine\Modulus\DataTransferObjects\ModuleStateData;
 use InEngine\Modulus\Events\ModuleDisabled;
 use InEngine\Modulus\Events\ModuleEnabled;
 use InEngine\Modulus\Events\ModuleForgotten;
+use InEngine\Modulus\Events\ModuleManualAttentionRequired;
 use InEngine\Modulus\Events\ModulePublished;
 use InEngine\Modulus\Events\ModuleRegistered;
 use InEngine\Modulus\Events\ModuleSeeded;
@@ -185,12 +186,90 @@ class ModuleRepository
                     $this->stateData($package),
                     $previousVersion,
                 ));
+                $this->dispatchManualAttentionIfAny($package);
 
                 return;
             }
 
             $this->discovery->sync();
         }
+    }
+
+    /**
+     * Scan Composer installs for Modulus modules and {@see register()} each.
+     *
+     * @return int Number of packages newly tracked or version-updated
+     */
+    public function discover(): int
+    {
+        $count = 0;
+
+        foreach ($this->installedPackages->installedPackageNames() as $package) {
+            if (! $this->looksLikeModulusModule($package)) {
+                continue;
+            }
+
+            $this->register($package, $this->installedPackages->version($package));
+            $count++;
+        }
+
+        $this->discovery->sync();
+
+        return $count;
+    }
+
+    /**
+     * Apply the installed Composer version for a package (migrate/hooks if enabled).
+     *
+     * Optional republish for host config/assets. Approving a new minor/major
+     * constraint still belongs to modulus-composer / UI (rewrites composer.json).
+     *
+     * @return bool True when a version change was applied (or publish ran)
+     */
+    public function upgrade(string $package, bool $publish = false): bool
+    {
+        if ($this->isDenied($package)) {
+            return false;
+        }
+
+        $this->assertPackageIsInstalled($package, wasEnabled: $this->store->isEnabled($package));
+
+        $before = $this->store->get($package);
+        $version = $this->installedPackages->version($package);
+        $this->register($package, $version);
+        $after = $this->store->get($package);
+
+        $changed = $before === null
+            || ($version !== null && ($before['version'] ?? null) !== ($after['version'] ?? null));
+
+        if ($publish) {
+            $this->publish($package);
+            $changed = true;
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Upgrade every tracked installed package (optional publish).
+     *
+     * @return int Number of packages that changed
+     */
+    public function upgradeAll(bool $publish = false): int
+    {
+        $count = 0;
+
+        foreach (array_keys($this->store->all()) as $package) {
+            if ($this->isDenied($package) || ! $this->installedPackages->isInstalled($package)) {
+                continue;
+            }
+
+            if ($this->upgrade($package, $publish)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     /**
@@ -416,6 +495,51 @@ class ModuleRepository
     protected function dispatchRegistered(string $package): void
     {
         $this->events->dispatch(new ModuleRegistered($this->stateData($package)));
+    }
+
+    protected function dispatchManualAttentionIfAny(string $package): void
+    {
+        $items = [];
+
+        foreach ($this->installedPackages->laravelProviderClasses($package) as $class) {
+            if (! class_exists($class) || ! is_subclass_of($class, ModuleServiceProvider::class)) {
+                continue;
+            }
+
+            /** @var ModuleServiceProvider $provider */
+            $provider = new $class(app());
+            foreach ($provider->modulusManualAttentionItems() as $item) {
+                if ($item !== '') {
+                    $items[] = $item;
+                }
+            }
+            break;
+        }
+
+        if ($items === []) {
+            return;
+        }
+
+        $this->events->dispatch(new ModuleManualAttentionRequired(
+            $package,
+            $items,
+            $this->store->get($package)['version'] ?? null,
+        ));
+    }
+
+    protected function looksLikeModulusModule(string $package): bool
+    {
+        if ($this->store->get($package) !== null || $this->isDenied($package)) {
+            return true;
+        }
+
+        foreach ($this->installedPackages->laravelProviderClasses($package) as $class) {
+            if (class_exists($class) && is_subclass_of($class, ModuleServiceProvider::class)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function stateData(string $package): ModuleStateData

@@ -15,8 +15,16 @@ Modulus does **not** invent a second plugin API. Use Laravel’s event bus and c
 | `ModuleUpgraded` | Enabled package version bump + migrate |
 | `ModulePublished` | `Modulus::publish()` finished |
 | `ModuleSeeded` | Confirmed `Modulus::seed()` finished |
+| `ModuleManualAttentionRequired` | Upgrade/doctor surfaced operator checklist items |
+| `ModuleUpdateAvailable` | Composer newer versions found (`modulus:outdated` / `modulus:update`) |
 
 Owning-module side effects stay on `ModuleLifecycle` hooks (`activating`, …). Listen to events when **another** module or the host should react.
+
+### modulus-ui
+
+- Subscribe to `ModuleUpgraded` / `ModuleManualAttentionRequired` / `ModuleUpdateAvailable` and poll/cache `ModulusDoctor::run()` findings for admin notifications.
+- Show outdated modules from `ModuleUpdateAvailable` or `modulus:outdated`; allow `modulus:update --auto` only when `modulus.updates.auto_patch` is on (patches within `~x.y.z`).
+- “Approve upgrade” actions should call modulus-composer to rewrite host constraints (default stay on `~x.y.z`) then `modulus:upgrade`.
 
 ```php
 use InEngine\Modulus\Events\ModuleEnabled;

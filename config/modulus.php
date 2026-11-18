@@ -107,4 +107,48 @@ return [
         'force_inertia' => false,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Upgrades (SemVer policy)
+    |--------------------------------------------------------------------------
+    |
+    | Default host constraint style for modulus-composer (Step 10) and UI:
+    |   - patch  → ~x.y.z  (same minor; patches only) — recommended default
+    |   - minor  → ^x.y.z  (same major; minors allowed)
+    |   - major  → * / flexible (not recommended for production hosts)
+    |
+    | Enabled modules auto-apply the *already installed* Composer version on
+    | handshake (register → migrate + upgrade hooks). Crossing a minor/major
+    | boundary requires operator approval (CLI/UI) which rewrites the host
+    | composer.json constraint, then composer update — never silent.
+    |
+    | modulus-ui should surface doctor findings + ModuleUpgraded /
+    | ModuleManualAttentionRequired for admins.
+    |
+    */
+    'upgrades' => [
+        'default_constraint' => 'patch',
+        'auto_apply_installed' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Available updates (Packagist / Composer outdated)
+    |--------------------------------------------------------------------------
+    |
+    | modulus:outdated / modulus:update and modulus:doctor can notify CLI and
+    | modulus-ui (ModuleUpdateAvailable) when newer versions exist.
+    |
+    | auto_patch: when true AND a real ModuleUpdateApplier is bound
+    | (inengine/modulus-composer), modulus:update --auto may install patch
+    | releases that stay within the host constraint (~x.y.z). Minor/major
+    | still require explicit approval.
+    |
+    */
+    'updates' => [
+        'check' => true,
+        'auto_patch' => false,
+        'include_in_doctor' => true,
+    ],
+
 ];

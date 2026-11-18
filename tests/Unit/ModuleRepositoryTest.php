@@ -61,6 +61,9 @@ function moduleRepositoryFixture(
         $installedPackages->shouldReceive('installPath')->andReturn(null)->byDefault();
         $installedPackages->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
         $installedPackages->shouldReceive('composerRequires')->andReturn([])->byDefault();
+        $installedPackages->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+        $installedPackages->shouldReceive('version')->andReturn(null)->byDefault();
+        $installedPackages->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
     }
 
     $migrator = Mockery::mock(ModuleMigrator::class);
@@ -724,6 +727,64 @@ it('dispatches ModulePublished and ModuleSeeded after successful operations', fu
     try {
         $repo->publish('inengine/alert');
         $repo->seed('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('discover registers modulus-like installed packages', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->andReturn(true)->byDefault();
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('composerRequires')->andReturn([])->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    $locator->shouldReceive('installedPackageNames')->andReturn(['inengine/alert', 'guzzlehttp/guzzle']);
+    $locator->shouldReceive('version')->with('inengine/alert')->andReturn('2.0.0');
+    $locator->shouldReceive('version')->with('guzzlehttp/guzzle')->andReturn('7.0.0')->byDefault();
+    $locator->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
+
+    // Pretend alert is already tracked so looksLikeModulusModule is true without providers.
+    [$directory, $path, $repo] = moduleRepositoryFixture(installedPackages: $locator);
+
+    try {
+        $repo->register('inengine/alert', '1.0.0');
+        $count = $repo->discover();
+
+        expect($count)->toBeGreaterThanOrEqual(1)
+            ->and($repo->get('inengine/alert')['version'])->toBe('2.0.0');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('upgrade applies installed version for an enabled package', function () {
+    $locator = Mockery::mock(InstalledPackageLocator::class);
+    $locator->shouldReceive('isInstalled')->andReturn(true)->byDefault();
+    $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $locator->shouldReceive('composerRequires')->andReturn([])->byDefault();
+    $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    $locator->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+    $locator->shouldReceive('version')->with('inengine/alert')->andReturn('1.2.0');
+    $locator->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
+
+    [$directory, $path, $repo, , , $migrator, , , $lifecycle] = moduleRepositoryFixture(installedPackages: $locator);
+
+    $lifecycle->shouldReceive('activating')->once();
+    $lifecycle->shouldReceive('activated')->once();
+    $lifecycle->shouldReceive('upgrading')->once();
+    $lifecycle->shouldReceive('upgraded')->once();
+    $migrator->shouldReceive('migrate')->twice();
+
+    try {
+        $repo->enable('inengine/alert');
+        // Force older state version then upgrade to installed 1.2.0
+        $store = new ReflectionProperty($repo, 'store');
+        $state = $store->getValue($repo)->get('inengine/alert');
+        $state['version'] = '1.0.0';
+        $store->getValue($repo)->put('inengine/alert', $state);
+
+        expect($repo->upgrade('inengine/alert'))->toBeTrue()
+            ->and($repo->get('inengine/alert')['version'])->toBe('1.2.0');
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }

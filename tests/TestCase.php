@@ -17,5 +17,11 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+
+        $statePath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-testbench-'.uniqid('', true).'.json';
+        config()->set('modulus.state_path', $statePath);
+        config()->set('modulus.state_fsync', false);
+        config()->set('modulus.upgrades.default_constraint', 'patch');
+        config()->set('modulus.upgrades.auto_apply_installed', true);
     }
 }
