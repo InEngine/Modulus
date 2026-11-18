@@ -3,6 +3,7 @@
 namespace InEngine\Modulus;
 
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
@@ -13,6 +14,14 @@ use InEngine\Modulus\Contracts\ModuleSeeder;
 use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
+use InEngine\Modulus\DataTransferObjects\ModuleStateData;
+use InEngine\Modulus\Events\ModuleDisabled;
+use InEngine\Modulus\Events\ModuleEnabled;
+use InEngine\Modulus\Events\ModuleForgotten;
+use InEngine\Modulus\Events\ModulePublished;
+use InEngine\Modulus\Events\ModuleRegistered;
+use InEngine\Modulus\Events\ModuleSeeded;
+use InEngine\Modulus\Events\ModuleUpgraded;
 use InEngine\Modulus\Exceptions\MissingModuleException;
 use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\ModuleSeederMissingException;
@@ -35,7 +44,10 @@ use InEngine\Modulus\Exceptions\UnmetModuleDependencyException;
  *
  * Step 7 deps: Composer `require` is the hard graph. Modulus modules among
  * requires must be enabled; plain Composer packages must only be installed
- * (the feature module bootstraps their publish/migrate in lifecycle hooks).
+ * (the feature module may optionally reach down for publish/migrate).
+ *
+ * Step 8: Laravel events after successful transitions ({@see ModuleEnabled}, …).
+ * Owning-module hooks stay on {@see ModuleLifecycle}; events are for peers/host.
  *
  * Composer require/remove stays in inengine/modulus-composer (Step 10). That
  * extension should call {@see publish()} after acquire/update (and before enable).
@@ -56,6 +68,7 @@ class ModuleRepository
         protected ModuleSeederRunner $seeders,
         protected ModuleLifecycleRunner $lifecycle,
         protected ModuleDependencyGuard $dependencies,
+        protected Dispatcher $events,
         protected array $deny = ['inengine/modulus'],
     ) {}
 
@@ -71,6 +84,7 @@ class ModuleRepository
         ModuleSeederRunner $seeders,
         ModuleLifecycleRunner $lifecycle,
         ModuleDependencyGuard $dependencies,
+        Dispatcher $events,
         ConfigRepository $config,
     ): self {
         $deny = $config->get('modulus.discovery.deny', ['inengine/modulus']);
@@ -82,7 +96,7 @@ class ModuleRepository
         /** @var list<string> $denyList */
         $denyList = array_values(array_filter($deny, 'is_string'));
 
-        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $denyList);
+        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $denyList);
     }
 
     /**
@@ -151,12 +165,14 @@ class ModuleRepository
                 'version' => $version,
             ]);
             $this->discovery->sync();
+            $this->dispatchRegistered($package);
 
             return;
         }
 
         if ($version !== null && $existing['version'] !== $version) {
             $wasEnabled = $existing['enabled'] === true;
+            $previousVersion = $existing['version'];
             $existing['version'] = $version;
             $this->store->put($package, $existing);
 
@@ -164,6 +180,13 @@ class ModuleRepository
                 $this->lifecycle->upgrading($package);
                 $this->migrator->migrate($package);
                 $this->lifecycle->upgraded($package);
+                $this->discovery->sync();
+                $this->events->dispatch(new ModuleUpgraded(
+                    $this->stateData($package),
+                    $previousVersion,
+                ));
+
+                return;
             }
 
             $this->discovery->sync();
@@ -187,6 +210,7 @@ class ModuleRepository
 
         $this->assertPackageIsInstalled($package, wasEnabled: false);
         $this->publisher->publish($package);
+        $this->events->dispatch(new ModulePublished($package));
     }
 
     /**
@@ -214,6 +238,7 @@ class ModuleRepository
         }
 
         $seeder->run();
+        $this->events->dispatch(new ModuleSeeded($package));
     }
 
     /**
@@ -253,6 +278,7 @@ class ModuleRepository
         $this->store->setEnabled($package, true);
         $this->discovery->sync();
         $this->lifecycle->activated($package);
+        $this->events->dispatch(new ModuleEnabled($this->stateData($package)));
     }
 
     /**
@@ -329,13 +355,14 @@ class ModuleRepository
         $this->store->setEnabled($package, false);
         $this->discovery->sync();
         $this->lifecycle->deactivated($package);
+        $this->events->dispatch(new ModuleDisabled($this->stateData($package)));
     }
 
     /**
      * Drop a package from Modulus state (does not run composer remove).
      *
-     * Non-destructive of module data. If the package is enabled, runs {@see disable()}
-     * first. Composer remove belongs to inengine/modulus-composer.
+     * Non-destructive of module data. If the package is enabled, runs disable
+     * hooks first. Composer remove belongs to inengine/modulus-composer.
      *
      * @throws \InvalidArgumentException
      * @throws ModuleHasDependentsException When enabled modules still require this package.
@@ -361,12 +388,14 @@ class ModuleRepository
             $this->store->setEnabled($package, false);
             $this->discovery->sync();
             $this->lifecycle->deactivated($package);
+            $this->events->dispatch(new ModuleDisabled($this->stateData($package)));
         }
 
         $this->lifecycle->uninstalling($package);
         $this->store->remove($package);
         $this->discovery->sync();
         $this->lifecycle->uninstalled($package);
+        $this->events->dispatch(new ModuleForgotten($package));
     }
 
     /**
@@ -382,5 +411,21 @@ class ModuleRepository
     public function isDenied(string $package): bool
     {
         return in_array($package, $this->deny, true);
+    }
+
+    protected function dispatchRegistered(string $package): void
+    {
+        $this->events->dispatch(new ModuleRegistered($this->stateData($package)));
+    }
+
+    protected function stateData(string $package): ModuleStateData
+    {
+        $state = $this->store->get($package);
+
+        if ($state === null) {
+            return new ModuleStateData($package, enabled: false, version: null);
+        }
+
+        return ModuleStateData::fromStore($package, $state);
     }
 }

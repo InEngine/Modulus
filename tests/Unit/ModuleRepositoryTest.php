@@ -2,6 +2,7 @@
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Events\Dispatcher;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
@@ -11,6 +12,13 @@ use InEngine\Modulus\Contracts\ModuleSeeder;
 use InEngine\Modulus\Contracts\ModuleSeederRunner;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
+use InEngine\Modulus\Events\ModuleDisabled;
+use InEngine\Modulus\Events\ModuleEnabled;
+use InEngine\Modulus\Events\ModuleForgotten;
+use InEngine\Modulus\Events\ModulePublished;
+use InEngine\Modulus\Events\ModuleRegistered;
+use InEngine\Modulus\Events\ModuleSeeded;
+use InEngine\Modulus\Events\ModuleUpgraded;
 use InEngine\Modulus\Exceptions\MissingModuleException;
 use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\SeedingConfirmationRequiredException;
@@ -31,13 +39,15 @@ use Mockery\MockInterface;
  *     6: MockInterface&ModulePublisher,
  *     7: MockInterface&ModuleSeederRunner,
  *     8: MockInterface&ModuleLifecycleRunner,
- *     9: MockInterface&ModuleDependencyGuard
+ *     9: MockInterface&ModuleDependencyGuard,
+ *     10: MockInterface&Dispatcher
  * }
  */
 function moduleRepositoryFixture(
     array $deny = ['inengine/modulus'],
     ?InstalledPackageLocator $installedPackages = null,
     ?ModuleDependencyGuard $dependencies = null,
+    ?Dispatcher $events = null,
 ): array {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-repo-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
@@ -71,10 +81,15 @@ function moduleRepositoryFixture(
         $dependencies->shouldReceive('assertCanDisable')->byDefault();
     }
 
+    if ($events === null) {
+        $events = Mockery::mock(Dispatcher::class);
+        $events->shouldReceive('dispatch')->byDefault();
+    }
+
     return [
         $directory,
         $path,
-        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $deny),
+        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $deny),
         $syncer,
         $installedPackages,
         $migrator,
@@ -82,6 +97,7 @@ function moduleRepositoryFixture(
         $seeders,
         $lifecycle,
         $dependencies,
+        $events,
     ];
 }
 
@@ -626,6 +642,107 @@ it('refuses to forget when dependency guard reports enabled dependents', functio
         expect(fn () => $repo->forget('inengine/users'))
             ->toThrow(ModuleHasDependentsException::class);
         expect($repo->get('inengine/users'))->not->toBeNull();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('dispatches lifecycle events for register enable disable forget', function () {
+    $events = Mockery::mock(Dispatcher::class);
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::on(fn ($e) => $e instanceof ModuleRegistered
+            && $e->module->package === 'inengine/alert'
+            && $e->module->enabled === false));
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::on(fn ($e) => $e instanceof ModuleEnabled
+            && $e->module->package === 'inengine/alert'
+            && $e->module->enabled === true));
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::on(fn ($e) => $e instanceof ModuleDisabled
+            && $e->module->package === 'inengine/alert'
+            && $e->module->enabled === false));
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::on(fn ($e) => $e instanceof ModuleForgotten
+            && $e->package === 'inengine/alert'));
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(events: $events);
+
+    try {
+        $repo->register('inengine/alert', '1.0.0');
+        $repo->enable('inengine/alert');
+        $repo->disable('inengine/alert');
+        $repo->forget('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('dispatches ModuleUpgraded when an enabled package version changes', function () {
+    $events = Mockery::mock(Dispatcher::class);
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::type(ModuleRegistered::class));
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::type(ModuleEnabled::class));
+    $events->shouldReceive('dispatch')
+        ->once()
+        ->with(Mockery::on(fn ($e) => $e instanceof ModuleUpgraded
+            && $e->module->package === 'inengine/alert'
+            && $e->previousVersion === '1.0.0'
+            && $e->module->version === '1.1.0'));
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(events: $events);
+
+    try {
+        $repo->register('inengine/alert', '1.0.0');
+        $repo->enable('inengine/alert');
+        $repo->register('inengine/alert', '1.1.0');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('dispatches ModulePublished and ModuleSeeded after successful operations', function () {
+    $events = Mockery::mock(Dispatcher::class);
+    $events->shouldReceive('dispatch')->once()->with(Mockery::type(ModulePublished::class));
+    $events->shouldReceive('dispatch')->once()->with(Mockery::type(ModuleSeeded::class));
+
+    $seeder = Mockery::mock(ModuleSeeder::class);
+    $seeder->shouldReceive('requiresConfirmation')->andReturn(false);
+    $seeder->shouldReceive('run')->once();
+
+    [$directory, $path, $repo, , , , $publisher, $seeders] = moduleRepositoryFixture(events: $events);
+
+    $publisher->shouldReceive('publish')->once()->with('inengine/alert');
+    $seeders->shouldReceive('resolve')->once()->with('inengine/alert')->andReturn($seeder);
+
+    try {
+        $repo->publish('inengine/alert');
+        $repo->seed('inengine/alert');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('does not re-dispatch ModuleEnabled when enabling an already-enabled package', function () {
+    $dispatched = [];
+    $events = Mockery::mock(Dispatcher::class);
+    $events->shouldReceive('dispatch')->andReturnUsing(function (object $event) use (&$dispatched): void {
+        $dispatched[] = $event::class;
+    });
+
+    [$directory, $path, $repo] = moduleRepositoryFixture(events: $events);
+
+    try {
+        $repo->enable('inengine/alert');
+        $repo->enable('inengine/alert');
+
+        expect($dispatched)->toBe([ModuleRegistered::class, ModuleEnabled::class]);
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }

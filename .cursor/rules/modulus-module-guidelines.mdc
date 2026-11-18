@@ -37,5 +37,8 @@ Do **not** put Composer hooks, marketplace, or operator UI into `inengine/modulu
 11. UI: ship assets under `resources/dist` for publish-to-public; load Blade/lang/Inertia from the package by default. Operator Modulus chrome belongs in `inengine/modulus-ui`, not feature modules.
 12. Seed only via `Modulus::seed($package, confirmed: true)`. Skeleton `ModuleSeeder::requiresConfirmation()` is always true — never seed on enable/install.
 13. Hard deps = Composer `require`. Required Modulus modules must be enabled before enable; non-Modulus packages need only be installed and keep normal Laravel discovery/publish. Optionally reach down from `activating()` / `bootstrapNonModulusDependencies()` when the module must also ensure config, UI dist, or migrations (skeleton `resources/DEPENDENCIES.md`).
+14. Cross-module: listen to Modulus lifecycle events; dispatch domain events the Laravel way; expose contracts + DTOs and bind in the container (skeleton `resources/INTEGRATION.md`). No custom plugin registry.
 
 Canonical detail: Documentation `Plan and Design.md` (extensions + “Guidelines for Modulus-compatible feature modules”).
+
+Laravel Boost: `resources/boost/guidelines/core.blade.php`, `AGENTS.md`, `.ai/guidelines/` (Step 8b).

@@ -98,6 +98,7 @@ class ModulusServiceProvider extends PackageServiceProvider
                 $app->make(ModuleSeederRunner::class),
                 $app->make(ModuleLifecycleRunner::class),
                 $app->make(ModuleDependencyGuard::class),
+                $app['events'],
                 $app['config'],
             );
         });

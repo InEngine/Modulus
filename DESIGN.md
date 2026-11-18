@@ -22,7 +22,8 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 | `PathModulePublisher` | **Install/update** via `ModuleRepository::publish()` (modulus-composer): config + public assets by default; views/lang/inertia opt-in overrides |
 | `PathModuleMigrator` | Pending migrations from `{installPath}/database/migrations` on enable / version-bump upgrade only |
 | `ModuleSeeder` / `seed()` | Explicit only: `Modulus::seed($pkg, confirmed: true)`; skeleton seeder always requires confirmation; never on enable |
-| Events + contracts/DTOs | Inter-module integration |
+| Lifecycle events + `ModuleStateData` | Laravel bus after enable/disable/forget/upgrade/publish/seed |
+| Contracts + DTOs (convention) | Interfaces + readonly payloads; container bindings — see `INTEGRATION.md` |
 | Artisan | list, discover, enable, disable, uninstall, status, **doctor** (incl. missing-module list + repair: install / supply source / substitute — Step 9) |
 
 ## Module authoring (required template + guidelines)
@@ -70,6 +71,18 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 - Plain Composer package among requires → must be installed only; still uses **normal Laravel discovery / vendor:publish**. Modules may optionally reach down on enable for extra config / `public/vendor` dist / migrations.  
 - Disable / forget blocked while any **enabled** module lists the package in its `require`.
 
+## Integration (Step 8)
+
+- Dispatch `InEngine\Modulus\Events\*` after successful repository transitions.  
+- Owning module: `ModuleLifecycle` hooks. Peers/host: event listeners.  
+- Domain events: normal Laravel. Contracts/DTOs: provide interface + bind when enabled; no second plugin API.  
+- Author guide: `INTEGRATION.md` (skeleton mirrors under `resources/INTEGRATION.md`).
+
+## Agent guidelines (Step 8b)
+
+- Boost package guidelines/skills under `resources/boost/` (loaded by host `boost:update` when `inengine/modulus` is in `boost.json` packages).
+- Repo-local: `AGENTS.md`, `.ai/guidelines/`.
+
 ## Status
 
-Steps 0–7 complete (deps guard + skeleton reach-down docs). Next: Step 8 events/contracts → Step 9 Artisan/`modulus:doctor` → Step 10 `modulus-composer`→publish.
+Steps 0–8 + **8b** complete. Next: Step 9 Artisan/`modulus:doctor` → Step 10 `modulus-composer`→publish.

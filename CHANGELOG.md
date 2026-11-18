@@ -4,6 +4,18 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+### Step 8b — Laravel Boost agent guidelines
+
+- `resources/boost/guidelines/core.blade.php` + `resources/boost/skills/modulus-modules` for consuming hosts
+- Repo `AGENTS.md`, `.ai/guidelines/inengine-modulus.md`
+
+### Step 8 — Event bus + contracts/DTOs
+
+- Lifecycle events: `ModuleRegistered`, `ModuleEnabled`, `ModuleDisabled`, `ModuleForgotten`, `ModuleUpgraded`, `ModulePublished`, `ModuleSeeded`
+- Shared DTO: `DataTransferObjects\ModuleStateData`
+- `ModuleRepository` dispatches via Laravel `Dispatcher` after successful transitions
+- Author guide: `INTEGRATION.md` (container contracts/DTOs + domain events; no second plugin API)
+
 ### Step 7 — Module dependencies
 
 - `ModuleDependencyGuard` / `ComposerModuleDependencyGuard`: Composer `require` graph on enable / disable / forget
