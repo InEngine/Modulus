@@ -2,9 +2,10 @@
 
 **Display name:** Modulus Composer  
 **Package:** [`inengine/modulus-composer`](https://github.com/InEngine/ModulusComposer)  
-**Repo:** [InEngine/ModulusComposer](https://github.com/InEngine/ModulusComposer)
+**Repo:** [InEngine/ModulusComposer](https://github.com/InEngine/ModulusComposer)  
+**License:** MIT (public) — Step 10 **done**
 
-Optional Modulus **extension** (not a feature module). Owns all Composer shell I/O so `inengine/modulus` stays lean.
+Optional Modulus **extension** (not a feature module). Owns all Composer shell I/O so `inengine/modulus` stays lean. Operator UI is a separate **private Pro** package (`modulus-ui`), not this one.
 
 ## Responsibilities
 

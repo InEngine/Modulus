@@ -19,11 +19,18 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-19 — Step 10 closed; ready for Step 11/13
+
+- **Branch:** `feat/modulus-state-store`.
+- **Done:** Steps **0–10 + 8b**. Modulus Composer shipped. MIT OSS tier; **`modulus-ui` private Pro**; InnKeeper unreleased. DESIGN status points to Step 11 audit / Step 13 pilot.
+- **Next:** Step **11** (confirm SemVer/Pint/Pest/PHPStan parity) or **Step 13** (Alert from Skeleton on Core Herd; Provost early boot). Marketplace/UI deferred.
+- **Open questions:** Merge `feat/modulus-state-store` → `main` when ready for Packagist-facing release.
+
 ### 2026-11-19 — Licensing: MIT OSS tier; UI private Pro
 
 - **Branch:** `feat/modulus-state-store`.
 - **Done:** Modulus (+ Core / Composer / Skeleton) **MIT**. DESIGN/README: **`modulus-ui` = private Pro**; **Innkeeper = unreleased source**.
-- **Next:** Marketplace later; scaffold private Pro UI when ready (separate license, not inside MIT packages).
+- **Next:** *(Superseded — see Step 10 closed entry.)*
 - **Open questions:** Commercial license text for `modulus-ui`.
 
 ### 2026-11-19 — Step 10 ModulusComposer scaffold; Skeleton rename

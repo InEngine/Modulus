@@ -12,9 +12,9 @@ Module runtime for [InEngine](https://github.com/InEngine): discover, enable, di
 
 ## Status
 
-Steps **0–9 + 8b** complete on `feat/modulus-state-store` (state store, discovery filter, repository, handshake, lifecycle/publish/seed, Composer deps, events/DTOs/Boost, Artisan + doctor + update notices).
+Steps **0–10 + 8b** complete on `feat/modulus-state-store` (through Artisan/doctor/updates) plus sibling **[Modulus Composer](https://github.com/InEngine/ModulusComposer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`.
 
-**Step 10** lives in the sibling package **[Modulus Composer](https://github.com/InEngine/ModulusComposer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`. Marketplace remains later; **`modulus-ui` is private Pro**.
+Marketplace remains later; **`modulus-ui` is private Pro**. Platform licensing: OSS tier **MIT**; Innkeeper product **unreleased source**.
 
 ## Requirements
 

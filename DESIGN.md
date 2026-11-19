@@ -100,4 +100,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–9 + **8b** complete. Step 10 **Modulus Composer** (`inengine/modulus-composer`, repo `InEngine/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). User docs under `docs/`. Marketplace later; **`modulus-ui` = private Pro** (not started).
+Steps **0–10 + 8b** complete for the OSS spine. Step 10 **Modulus Composer** shipped (`inengine/modulus-composer`, `InEngine/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). User docs under `docs/`. Marketplace later; **`modulus-ui` = private Pro** (not started). **Next:** Step 11 quality-gate audit (likely mostly done) and/or **Step 13** Alert pilot + Provost host.
