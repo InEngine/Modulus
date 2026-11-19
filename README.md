@@ -8,7 +8,7 @@ Module runtime for [InEngine](https://github.com/InEngine): discover, enable, di
 
 **CLI / API first.** UI is optional and must call the same PHP API. Enabled/disabled state lives in a **file** (`ModulusStateStore`); Modulus filters Laravel’s `PackageManifest` so disabled modules never load providers. Feature modules **register with Modulus** when it is present and stay disabled until enabled; without Modulus they boot as normal Spatie packages.
 
-**Documentation:** [docs/](docs/README.md) (also published as GitHub Pages from `/docs`).
+**Documentation:** [docs/](docs/) (Jekyll site under `/docs` for GitHub Pages when the org plan allows it).
 
 ## Status
 
