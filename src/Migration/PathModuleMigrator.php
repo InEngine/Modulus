@@ -12,7 +12,7 @@ use InEngine\Modulus\Contracts\ModuleMigrator;
 /**
  * Runs Laravel migrations from a conventional path under the package install root.
  *
- * Default relative path: `database/migrations` (Spatie / module-skeleton layout).
+ * Default relative path: `database/migrations` (Spatie / Skeleton layout).
  * Readable without booting the module provider — required because disabled modules
  * are omitted from PackageManifest before enable.
  *

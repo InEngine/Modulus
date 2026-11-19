@@ -19,12 +19,25 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-19 — Step 10 ModulusComposer scaffold; Skeleton rename
+
+- **Branch:** `feat/modulus-state-store` (approve messaging points at `modulus-composer:approve`).
+- **Done:** Sibling package `Modules/ModulusComposer` owns Composer I/O + real `ModuleUpdateApplier`. Template repo renamed `InEngine/Skeleton` (`Modules/Skeleton`).
+- **Next:** Green tests on ModulusComposer; GitHub repo; hosts opt in via path require (Core stays without hard require).
+- **Open questions:** Doctor substitution UX; Composer Plugin hooks deferred.
+
+### 2026-11-19 — Resume after Atlas; Steps 0–9 + 8b complete
+
+- **Branch:** `feat/modulus-state-store` @ `754dedd`.
+- **Where we are:** Steps **0–9 + 8b** done.
+- **Next:** Step 10 (see newer entry).
+- **Open questions:** Private Packagist auth UX; doctor substitution.
+
 ### 2026-11-17 — Step 6: publish on install; seed explicit + confirmed
 
-- **Branch:** `feat/modulus-state-store` (uncommitted — review before commit).
+- **Branch:** `feat/modulus-state-store` (later committed as `949484e` and beyond).
 - **Done:** `Modulus::publish()` for install (composer); enable = migrate + hooks only. `Modulus::seed($pkg, confirmed: true)` only — skeleton `ModuleSeeder` always `requiresConfirmation(): true`; never seed on enable. Dist assets on publish; UI overrides opt-in. Idempotent migration stub.
-- **Tests:** run full suite after seed seam.
-- **Next:** Review/commit Step 6 → Step 7; Step 9 `modulus:seed` prompt; Step 10 composer→publish.
+- **Next:** *(Superseded — Steps 7–9 landed; see 2026-11-19.)*
 - **Open questions:** Path-dev manual `Modulus::publish()` when UI assets needed before enable.
 
 ### 2026-11-17 — Step 6 lifecycle + migrations (Atlas)

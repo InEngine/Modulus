@@ -46,7 +46,7 @@ Prefer `Modulus` facade / `ModuleRepository` over the state store or discovery s
 
 - Runtime: `inengine/modulus`
 - Extensions: `inengine/modulus-{role}` (`composer`, `marketplace`, `ui`, `inspect`)
-- Features: `inengine/{feature}` from `InEngine/module-skeleton`
+- Features: `inengine/{feature}` from `InEngine/Skeleton`
 
 ## Dependencies
 

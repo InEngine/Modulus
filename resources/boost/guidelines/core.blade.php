@@ -16,7 +16,7 @@ Prefer `InEngine\Modulus\Facades\Modulus` / `ModuleRepository` over touching the
 
 - Runtime: `inengine/modulus`
 - Extensions: `inengine/modulus-{role}` only (`composer`, `marketplace`, `ui`, `inspect`) — never fold Composer hooks or operator UI into this package
-- Feature modules: `inengine/{feature}` from `InEngine/module-skeleton` — never `modulus-*`
+- Feature modules: `inengine/{feature}` from `InEngine/Skeleton` — never `modulus-*`
 
 ### Feature modules
 

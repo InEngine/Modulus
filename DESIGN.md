@@ -28,7 +28,7 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 
 ## Module authoring (required template + guidelines)
 
-Modulus-compatible feature modules should be created from **`InEngine/module-skeleton`**: a customized Spatie Laravel package template that includes the base provider handshake, quality gates, and a **capability descriptor stub**. Hand-rolled packages are discouraged.
+Modulus-compatible feature modules should be created from **`InEngine/Skeleton`**: a customized Spatie Laravel package template that includes the base provider handshake, quality gates, and a **capability descriptor stub**. Hand-rolled packages are discouraged.
 
 **Guidelines (also in Documentation plan + `.cursor/rules/modulus-module-guidelines.mdc`):**
 
@@ -92,4 +92,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–9 + **8b** complete (incl. update-notice seams). Next: Step 10 `modulus-composer` (constraint rewrite, real `ModuleUpdateApplier`, post-update publish) → modulus-ui notification UI.
+Steps 0–9 + **8b** complete. Step 10 **`inengine/modulus-composer`** scaffolded (`Modules/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). Marketplace / modulus-ui still later.

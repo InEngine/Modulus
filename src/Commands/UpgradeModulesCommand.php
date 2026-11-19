@@ -28,9 +28,10 @@ class UpgradeModulesCommand extends Command
             $policy = UpgradeConstraintPolicy::fromConfig(config('modulus.upgrades.default_constraint'));
             $this->warn('Approving a minor/major bump rewrites the host Composer constraint.');
             $this->line('Suggested constraint under default policy ['.$policy->policy().']: '.$policy->suggestConstraint($approve));
-            $this->comment('Use inengine/modulus-composer (Step 10) or modulus-ui to update composer.json + lock, then re-run modulus:upgrade.');
+            $this->comment('Rewrite constraints with: php artisan modulus-composer:approve {package} {version}');
+            $this->comment('(Requires inengine/modulus-composer. Then re-run modulus:upgrade if needed.)');
             if (is_string($package) && $package !== '') {
-                $this->line("Pending approval for [{$package}] → {$approve}");
+                $this->line("Suggested: php artisan modulus-composer:approve {$package} {$approve}");
             }
         }
 

@@ -11,7 +11,7 @@ alwaysApply: true
 |------|---------------|---------|
 | Runtime | `inengine/modulus` | Enable/disable, state, PackageManifest filter, handshake, lifecycle CLI |
 | Extensions | `inengine/modulus-{role}` | Optional add-ons — **not** feature product modules |
-| Feature modules | `inengine/{feature}` | Product capabilities (Alert, Calendar, …) from `InEngine/module-skeleton` |
+| Feature modules | `inengine/{feature}` | Product capabilities (Alert, Calendar, …) from `InEngine/Skeleton` |
 
 ### Locked extension names
 
@@ -25,7 +25,7 @@ Do **not** put Composer hooks, marketplace, or operator UI into `inengine/modulu
 ## Feature module guidelines
 
 1. Name packages `inengine/{feature}` — never `inengine/modulus-*`.
-2. Scaffold from `InEngine/module-skeleton` (Spatie-based).
+2. Scaffold from `InEngine/Skeleton` (Spatie-based).
 3. Extend `ModuleServiceProvider`; implement `modulusPackageName()` (optional `modulusPackageVersion()`). Registration happens in `packageRegistered`; Spatie `boot` / `packageBooted` run only when enabled; standalone full boot if Modulus absent.
 4. Use only `extra.laravel.providers` for Laravel discovery.
 5. Install ≠ enable; default disabled until `modulus:enable`.
