@@ -4,6 +4,10 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Relicense as MIT
+
 ### Step 9 — Artisan surface, doctor, upgrades + update notices
 
 - Commands: `modulus:list|discover|enable|disable|uninstall|status|publish|seed|upgrade|outdated|update|doctor`

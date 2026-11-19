@@ -2,7 +2,7 @@
 
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/InEngine/Modulus/run-tests.yml?branch=feat%2Fmodulus-state-store&label=tests&style=flat-square)](https://github.com/InEngine/Modulus/actions?query=workflow%3Arun-tests)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/InEngine/Modulus/fix-php-code-style-issues.yml?branch=feat%2Fmodulus-state-store&label=code%20style&style=flat-square)](https://github.com/InEngine/Modulus/actions?query=workflow%3A%22Fix+PHP+code+style+issues%22)
-[![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
 
 Module runtime for [InEngine](https://github.com/InEngine): discover, enable, disable, publish, seed, upgrade, and diagnose Composer-based Laravel modules.
 
@@ -119,4 +119,4 @@ composer format
 
 ## License
 
-CC BY-NC-SA 4.0. See [LICENSE.txt](LICENSE.txt).
+The MIT License (MIT). See [LICENSE.txt](LICENSE.txt).
