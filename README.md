@@ -1,18 +1,25 @@
 # Modulus
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/inengine/modulus.svg?style=flat-square)](https://packagist.org/packages/inengine/modulus)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/inengine/modulus/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/inengine/modulus/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/inengine/modulus/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/inengine/modulus/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/inengine/modulus.svg?style=flat-square)](https://packagist.org/packages/inengine/modulus)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/InEngine/Modulus/run-tests.yml?branch=feat%2Fmodulus-state-store&label=tests&style=flat-square)](https://github.com/InEngine/Modulus/actions?query=workflow%3Arun-tests)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/InEngine/Modulus/fix-php-code-style-issues.yml?branch=feat%2Fmodulus-state-store&label=code%20style&style=flat-square)](https://github.com/InEngine/Modulus/actions?query=workflow%3A%22Fix+PHP+code+style+issues%22)
 [![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Module system for [InEngine](https://github.com/InEngine): discover, enable, disable, and uninstall Composer-based Laravel modules. **CLI / API first**; UI is optional and must share the same API. Enabled/disabled state is tracked in a **file**, then synced so Laravel’s package discovery only loads enabled module providers. Feature modules **register with Modulus** when it is present and stay disabled until enabled.
+Module runtime for [InEngine](https://github.com/InEngine): discover, enable, disable, publish, seed, upgrade, and diagnose Composer-based Laravel modules.
 
-See [DESIGN.md](DESIGN.md) and the platform [Plan and Design](../../Documentation/Plan%20and%20Design.md) (stepped plan 0–13: `ModulusStateStore`, PackageManifest sync, doctor, Composer submodule, non-destructive lifecycle).
+**CLI / API first.** UI is optional and must call the same PHP API. Enabled/disabled state lives in a **file** (`ModulusStateStore`); Modulus filters Laravel’s `PackageManifest` so disabled modules never load providers. Feature modules **register with Modulus** when it is present and stay disabled until enabled; without Modulus they boot as normal Spatie packages.
+
+**Documentation:** [docs/](docs/README.md) (also published as GitHub Pages from `/docs`).
 
 ## Status
 
-Laravel 13 / PHP 8.5 baseline is on `main` ([PR #7](https://github.com/InEngine/Modulus/pull/7) merged). `ModulusStateStore` + PackageManifest filtering (Step 3) are in progress on `feat/modulus-state-store`. Next: `ModuleRepository`, self-gating `ModuleServiceProvider`, Artisan lifecycle commands (including `modulus:doctor`).
+Steps **0–9 + 8b** complete on `feat/modulus-state-store` (state store, discovery filter, repository, handshake, lifecycle/publish/seed, Composer deps, events/DTOs/Boost, Artisan + doctor + update notices).
+
+**Step 10** lives in the sibling package **[Modulus Composer](https://github.com/InEngine/ModulusComposer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`. Marketplace / modulus-ui remain later.
+
+## Requirements
+
+- PHP ^8.5
+- Laravel ^12 or ^13 (`illuminate/contracts`)
 
 ## Installation
 
@@ -21,11 +28,11 @@ composer require inengine/modulus
 php artisan vendor:publish --tag="modulus-config"
 ```
 
-No migrations are required for the module registry (file-backed state).
+No migrations for the registry (file-backed state under `storage/modulus/` by default).
 
-### Early boot (required for enable/disable)
+### Early boot (required)
 
-Laravel registers discovered providers before package service providers run. After `Application::configure(...)->create()`, call the installer so Modulus can filter `PackageManifest` in time:
+Laravel registers discovered providers before package providers boot. After `Application::configure(...)->create()`, install the filtered manifest:
 
 ```php
 use InEngine\Modulus\Discovery\PackageManifestInstaller;
@@ -41,52 +48,75 @@ if (class_exists(PackageManifestInstaller::class)) {
 return $app;
 ```
 
-Disabled packages tracked in the Modulus state file are then omitted from auto-discovered providers/aliases. Listing CLI/UI still sees them via the state store.
+### Local monorepo (InEngine Core)
 
-## Intended Artisan surface
+Path-resolve via `composer.local.json` (merge plugin) → `../Modules/*`. Core requires `inengine/modulus` `*@dev`; do not hard-require Modulus Composer in Core.
 
-Every UI capability must have a matching Artisan command (same underlying API):
+## Install ≠ enable ≠ seed
+
+| Step | What happens |
+|------|----------------|
+| Composer require | Code on disk only |
+| `Modulus::publish()` / `modulus:publish` | Config + `resources/dist` → `public/vendor/{name}` (install/update path) |
+| `modulus:enable` | Deps → lifecycle → migrate → discovery sync. **No** publish/seed |
+| `Modulus::seed(..., confirmed: true)` | Explicit only; never on enable |
+
+## Artisan
 
 ```bash
 php artisan modulus:list
 php artisan modulus:discover
-php artisan modulus:enable {module}
-php artisan modulus:disable {module}
-php artisan modulus:uninstall {module}
-php artisan modulus:status {module}
+php artisan modulus:enable {package}
+php artisan modulus:disable {package}
+php artisan modulus:uninstall {package}   # non-destructive of DB; forget state
+php artisan modulus:status {package}
+php artisan modulus:publish {package}
+php artisan modulus:seed {package}        # prompts / requires confirmation
+php artisan modulus:upgrade {package?} {--publish} {--approve=}
+php artisan modulus:outdated
+php artisan modulus:update {--auto}       # --auto needs Modulus Composer applier + auto_patch
+php artisan modulus:doctor
 ```
 
-## Module packages
+Default host constraint policy: **patch** → `~x.y.z`. Minor/major bumps need approval via **Modulus Composer** (`modulus-composer:approve`) or UI later.
 
-Feature modules are Spatie-style Laravel packages that:
+## Feature modules
 
-- Register via `extra.laravel.providers` only
-- Extend Modulus’s base `ModuleServiceProvider`: if Modulus exists, **register with it** and boot only when enabled; if not, boot normally (standalone)
-- Rely on Modulus to sync enable/disable into Laravel’s effective package-discovery / provider load set
+Create from **[InEngine/Skeleton](https://github.com/InEngine/Skeleton)** (GitHub template, not Packagist):
 
-## Testing
+- Package name `inengine/{feature}` — never `inengine/modulus-*`
+- Extend `InEngine\Modulus\ModuleServiceProvider`
+- `extra.laravel.providers` only
+- Boot only when Modulus reports enabled; standalone full boot if Modulus is absent
+
+## Extensions
+
+| Package | Display name | Role |
+|---------|--------------|------|
+| [`inengine/modulus-composer`](https://github.com/InEngine/ModulusComposer) | **Modulus Composer** | Composer I/O + constraint rewrite + `ModuleUpdateApplier` |
+| `inengine/modulus-marketplace` | (planned) | Browse / install sources |
+| `inengine/modulus-ui` | (planned) | Operator UI |
+| `inengine/modulus-inspect` | (planned) | Capability catalog |
+
+## Testing / quality
 
 ```bash
 composer test
+composer analyse
+composer format
 ```
 
-## Changelog
+## Further reading
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+- [docs/](docs/README.md) — user-facing documentation
+- [DESIGN.md](DESIGN.md) — package design notes
+- [INTEGRATION.md](INTEGRATION.md) — events, contracts, DTOs
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## Credits
 
 - [James Johnson](https://github.com/excellentingenuity)
-- [All Contributors](../../contributors)
 
 ## License
 
-CC BY-NC-SA 4.0. Please see the [License File](LICENSE.txt) for more information.
+CC BY-NC-SA 4.0. See [LICENSE.txt](LICENSE.txt).

@@ -10,6 +10,7 @@ Composer package `inengine/modulus` — module runtime for InEngine (PHP ^8.5, i
 
 ## Project docs
 
+- User docs (GitHub Pages): `docs/`
 - `DESIGN.md`, `INTEGRATION.md`, `CHANGELOG.md`
 - Boost package guidelines (for hosts): `resources/boost/guidelines/core.blade.php`
 - Repo guidelines: `.ai/guidelines/inengine-modulus.md`

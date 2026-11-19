@@ -1,0 +1,10 @@
+title: Modulus
+description: Module runtime for InEngine — enable, disable, and lifecycle for Composer Laravel packages
+remote_theme: pages-themes/primer@v0.6.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+markdown: kramdown

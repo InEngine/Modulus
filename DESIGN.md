@@ -53,7 +53,7 @@ Modulus-compatible feature modules should be created from **`InEngine/Skeleton`*
 
 | Package | Role |
 |---------|------|
-| `inengine/modulus-composer` | Composer require/remove/update; optional Composer hooks → discover → enable |
+| `inengine/modulus-composer` (**Modulus Composer**) | Composer require/remove/update; Artisan hooks → discover/publish (install ≠ enable) |
 | `inengine/modulus-marketplace` | Browse/search known sources; uses composer client for install |
 | `inengine/modulus-ui` | Operator UI over Modulus + extension APIs |
 | `inengine/modulus-inspect` | Capability inspect / compat / integrate docs |
@@ -92,4 +92,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–9 + **8b** complete. Step 10 **`inengine/modulus-composer`** scaffolded (`Modules/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). Marketplace / modulus-ui still later.
+Steps 0–9 + **8b** complete. Step 10 **Modulus Composer** (`inengine/modulus-composer`, repo `InEngine/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). User docs under `docs/`. Marketplace / modulus-ui still later.
