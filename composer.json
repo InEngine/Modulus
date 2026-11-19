@@ -1,12 +1,13 @@
 {
     "name": "inengine/modulus",
-    "description": "A Module System for InEngine",
+    "description": "Modulus — module runtime for InEngine (enable/disable, discovery, lifecycle, doctor)",
     "keywords": [
         "InEngine",
         "laravel",
-        "modulus"
+        "modulus",
+        "modules"
     ],
-    "homepage": "https://github.com/inengine/modulus",
+    "homepage": "https://github.com/InEngine/Modulus",
     "license": "MIT",
     "authors": [
         {
