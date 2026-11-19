@@ -9,7 +9,6 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 | Consumer | Path | Local require |
 |----------|------|----------------|
 | InEngine Core | `…/InEngine/Core` | `composer.local.json` → `../Modules/*` `@dev` |
-| Provost | `…/Provost/web` | `composer.local.json` → `../../InEngine/Modules/*` `@dev` |
 | LTC (legacy) | `…/LegacyTradeCollege/app` | path to Modules when needed |
 
 ## How to update
@@ -28,14 +27,14 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 ### 2026-11-19 — Step 10 closed; ready for Step 11/13
 
 - **Branch:** `feat/modulus-state-store`.
-- **Done:** Steps **0–10 + 8b**. Modulus Composer shipped. MIT OSS tier; **`modulus-ui` private Pro**; InnKeeper unreleased. DESIGN status points to Step 11 audit / Step 13 pilot.
-- **Next:** Step **11** (confirm SemVer/Pint/Pest/PHPStan parity) or **Step 13** (Alert from Skeleton on Core Herd; Provost early boot). Marketplace/UI deferred.
+- **Done:** Steps **0–10 + 8b**. Modulus Composer shipped. MIT OSS tier; **`modulus-ui` private Pro**. DESIGN status points to Step 11 audit / Step 13 pilot.
+- **Next:** Step **11** (confirm SemVer/Pint/Pest/PHPStan parity) or **Step 13** (Alert from Skeleton on Core Herd). Marketplace/UI deferred.
 - **Open questions:** Merge `feat/modulus-state-store` → `main` when ready for Packagist-facing release.
 
 ### 2026-11-19 — Licensing: MIT OSS tier; UI private Pro
 
 - **Branch:** `feat/modulus-state-store`.
-- **Done:** Modulus (+ Core / Composer / Skeleton) **MIT**. DESIGN/README: **`modulus-ui` = private Pro**; **Innkeeper = unreleased source**.
+- **Done:** Modulus (+ Core / Composer / Skeleton) **MIT**. DESIGN/README: **`modulus-ui` = private Pro**; .
 - **Next:** *(Superseded — see Step 10 closed entry.)*
 - **Open questions:** Commercial license text for `modulus-ui`.
 
@@ -166,5 +165,5 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 ### 2026-08-28 — Laravel 13 / PHP 8.5 support
 
 - **Branch:** `feat/laravel-13-support` — PR **[#7](https://github.com/InEngine/Modulus/pull/7)**; tracking **[#8](https://github.com/InEngine/Modulus/issues/8)**.
-- **Done:** `illuminate/contracts` `^12\|\|^13`, PHP `^8.5`, testbench/CI matrix like TableUI (L13+L12). Pest **16 passed**, PHPStan clean on Laravel 13 locally. Core + Provost local dist require `@dev`.
-- **Next:** Merge PR when CI green; tag release; then Provost issue **#1** (Require Modulus in Provost) can move off blocked.
+- **Done:** `illuminate/contracts` `^12\|\|^13`, PHP `^8.5`, testbench/CI matrix like TableUI (L13+L12). Pest **16 passed**, PHPStan clean on Laravel 13 locally. Core local dist require `@dev`.
+- **Next:** Merge PR when CI green; tag release; then continue Step 13 pilot.

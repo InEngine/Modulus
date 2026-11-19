@@ -14,7 +14,7 @@ Module runtime for [InEngine](https://github.com/InEngine): discover, enable, di
 
 Steps **0–10 + 8b** complete on `feat/modulus-state-store` (through Artisan/doctor/updates) plus sibling **[Modulus Composer](https://github.com/InEngine/Modulus-Composer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`.
 
-Marketplace remains later; **`modulus-ui` is private Pro**. Platform licensing: OSS tier **MIT**; Innkeeper product **unreleased source**.
+Marketplace remains later; **`modulus-ui` is private Pro**. Platform licensing: OSS tier **MIT**.
 
 ## Requirements
 
