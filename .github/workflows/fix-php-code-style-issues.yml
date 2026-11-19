@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - '**.php'
+      - '.github/workflows/fix-php-code-style-issues.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
