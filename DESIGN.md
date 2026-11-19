@@ -51,14 +51,22 @@ Modulus-compatible feature modules should be created from **`InEngine/Skeleton`*
 
 ## Extensions (`inengine/modulus-{role}`)
 
-| Package | Role |
-|---------|------|
-| `inengine/modulus-composer` (**Modulus Composer**) | Composer require/remove/update; Artisan hooks → discover/publish (install ≠ enable) |
-| `inengine/modulus-marketplace` | Browse/search known sources; uses composer client for install |
-| `inengine/modulus-ui` | Operator UI over Modulus + extension APIs |
-| `inengine/modulus-inspect` | Capability inspect / compat / integrate docs |
+| Package | Role | Distribution |
+|---------|------|----------------|
+| `inengine/modulus-composer` (**Modulus Composer**) | Composer require/remove/update; Artisan hooks → discover/publish (install ≠ enable) | Public MIT (Packagist / GitHub) |
+| `inengine/modulus-marketplace` | Browse/search known sources; uses composer client for install | Planned |
+| `inengine/modulus-ui` | Operator UI over Modulus + extension APIs | **Private Pro** (commercial; not public Packagist) |
+| `inengine/modulus-inspect` | Capability inspect / compat / integrate docs | Planned |
 
 Feature modules remain `inengine/{feature}`, not `modulus-*`.
+
+## Licensing (platform)
+
+| Work | License / visibility |
+|------|----------------------|
+| Core, Modulus, Modulus Composer, Skeleton | **MIT** (public) |
+| `modulus-ui` | **Private Pro** |
+| Innkeeper (product) | **Unreleased source** (not public yet) |
 
 ## Quality
 
@@ -92,4 +100,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps 0–9 + **8b** complete. Step 10 **Modulus Composer** (`inengine/modulus-composer`, repo `InEngine/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). User docs under `docs/`. Marketplace / modulus-ui still later.
+Steps 0–9 + **8b** complete. Step 10 **Modulus Composer** (`inengine/modulus-composer`, repo `InEngine/ModulusComposer`): require/remove/update/approve, constraint rewrite, real `ModuleUpdateApplier`, discover/publish hooks (install ≠ enable). User docs under `docs/`. Marketplace later; **`modulus-ui` = private Pro** (not started).

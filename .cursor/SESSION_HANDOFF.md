@@ -19,6 +19,13 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-19 — Licensing: MIT OSS tier; UI private Pro
+
+- **Branch:** `feat/modulus-state-store`.
+- **Done:** Modulus (+ Core / Composer / Skeleton) **MIT**. DESIGN/README: **`modulus-ui` = private Pro**; **Innkeeper = unreleased source**.
+- **Next:** Marketplace later; scaffold private Pro UI when ready (separate license, not inside MIT packages).
+- **Open questions:** Commercial license text for `modulus-ui`.
+
 ### 2026-11-19 — Step 10 ModulusComposer scaffold; Skeleton rename
 
 - **Branch:** `feat/modulus-state-store` (approve messaging points at `modulus-composer:approve`).

@@ -14,7 +14,7 @@ Module runtime for [InEngine](https://github.com/InEngine): discover, enable, di
 
 Steps **0–9 + 8b** complete on `feat/modulus-state-store` (state store, discovery filter, repository, handshake, lifecycle/publish/seed, Composer deps, events/DTOs/Boost, Artisan + doctor + update notices).
 
-**Step 10** lives in the sibling package **[Modulus Composer](https://github.com/InEngine/ModulusComposer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`. Marketplace / modulus-ui remain later.
+**Step 10** lives in the sibling package **[Modulus Composer](https://github.com/InEngine/ModulusComposer)** (`inengine/modulus-composer`): Composer require/remove/update, `~x.y.z` constraint rewrites, and the real `ModuleUpdateApplier`. Marketplace remains later; **`modulus-ui` is private Pro**.
 
 ## Requirements
 
@@ -93,9 +93,9 @@ Create from **[InEngine/Skeleton](https://github.com/InEngine/Skeleton)** (GitHu
 
 | Package | Display name | Role |
 |---------|--------------|------|
-| [`inengine/modulus-composer`](https://github.com/InEngine/ModulusComposer) | **Modulus Composer** | Composer I/O + constraint rewrite + `ModuleUpdateApplier` |
+| [`inengine/modulus-composer`](https://github.com/InEngine/ModulusComposer) | **Modulus Composer** | Composer I/O + constraint rewrite + `ModuleUpdateApplier` (public MIT) |
 | `inengine/modulus-marketplace` | (planned) | Browse / install sources |
-| `inengine/modulus-ui` | (planned) | Operator UI |
+| `inengine/modulus-ui` | (planned) | Operator UI — **private Pro** |
 | `inengine/modulus-inspect` | (planned) | Capability catalog |
 
 ## Testing / quality
