@@ -16,6 +16,7 @@ All operator capabilities are available on the CLI (UI must share the same API).
 | `modulus:outdated` | List available Composer updates for tracked modules |
 | `modulus:update {--auto}` | Notify / optionally auto-apply patch updates |
 | `modulus:doctor` | Diagnostics (missing packages, deps, constraint policy, updates) |
+| `modulus:capabilities {package?} {--token=} {--drivers=} {--all} {--json}` | Capability Registry (provides / requires / drivers) |
 
 ### Notes
 

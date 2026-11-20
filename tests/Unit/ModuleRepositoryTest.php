@@ -7,6 +7,7 @@
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
+use InEngine\Modulus\Capabilities\ModuleCapabilityLocator;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
@@ -102,10 +103,13 @@ function moduleRepositoryFixture(
         $events->shouldReceive('dispatch')->byDefault();
     }
 
+    $capabilityLocator = Mockery::mock(ModuleCapabilityLocator::class);
+    $capabilityLocator->shouldReceive('locate')->andReturn(null)->byDefault();
+
     return [
         $directory,
         $path,
-        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $deny),
+        new ModuleRepository($store, $syncer, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator, $deny),
         $syncer,
         $installedPackages,
         $migrator,

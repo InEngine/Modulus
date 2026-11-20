@@ -8,6 +8,7 @@
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
+use InEngine\Modulus\Capabilities\ModuleCapabilityLocator;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
@@ -23,8 +24,7 @@ use InEngine\Modulus\State\FileModulusStateStore;
 /**
  * Build permissive Mockery doubles for {@see ModuleRepository} collaborators not under test here.
  *
- * @return array{0: ModuleMigrator, 1: ModulePublisher, 2: ModuleSeederRunner, 3: ModuleLifecycleRunner, 4: ModuleDependencyGuard, 5: Dispatcher}
- *                                                                                                                                                Migrator, publisher, seeders, lifecycle, dependency guard, event dispatcher.
+ * @return array{0: ModuleMigrator, 1: ModulePublisher, 2: ModuleSeederRunner, 3: ModuleLifecycleRunner, 4: ModuleDependencyGuard, 5: Dispatcher, 6: ModuleCapabilityLocator}
  */
 function moduleRepositoryLifecycleDoubles(): array
 {
@@ -47,7 +47,10 @@ function moduleRepositoryLifecycleDoubles(): array
     $events = Mockery::mock(Dispatcher::class);
     $events->shouldReceive('dispatch')->byDefault();
 
-    return [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events];
+    $capabilityLocator = Mockery::mock(ModuleCapabilityLocator::class);
+    $capabilityLocator->shouldReceive('locate')->andReturn(null)->byDefault();
+
+    return [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator];
 }
 
 it('enable and disable change filtered providers after discovery sync', function () {
@@ -78,8 +81,8 @@ it('enable and disable change filtered providers after discovery sync', function
     $installed->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
     $installed->shouldReceive('version')->andReturn(null)->byDefault();
     $installed->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
-    [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events] = moduleRepositoryLifecycleDoubles();
-    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, ['inengine/modulus']);
+    [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator] = moduleRepositoryLifecycleDoubles();
+    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator, ['inengine/modulus']);
 
     $makeManifest = function () use ($directory, $packagesPath, $store): FilteringPackageManifest {
         return new FilteringPackageManifest(
@@ -137,9 +140,9 @@ it('discovery syncer is invoked by repository toggles', function () {
     $installed->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
     $installed->shouldReceive('version')->andReturn(null)->byDefault();
     $installed->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
-    [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events] = moduleRepositoryLifecycleDoubles();
+    [$migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator] = moduleRepositoryLifecycleDoubles();
 
-    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, ['inengine/modulus']);
+    $repo = new ModuleRepository($store, $syncer, $installed, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator, ['inengine/modulus']);
 
     try {
         $repo->enable('inengine/alert');

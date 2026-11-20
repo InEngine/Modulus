@@ -6,7 +6,9 @@ Package-local design notes for `inengine/modulus`. Canonical platform plan: [Pla
 
 Module runtime for InEngine: discover Composer Laravel packages that are modules, track enabled/disabled in a **file** (`ModulusStateStore`), sync enable/disable through Laravel **package discovery**, lifecycle hooks, Artisan (including **`modulus:doctor`**), and event bus + contracts/DTOs.
 
-**Not in core:** Composer require/remove/hooks, marketplace browse, operator UI, or capability inspect — those are `inengine/modulus-*` extension packages.
+**Not in core:** Composer require/remove/hooks, marketplace browse, or operator UI — those are `inengine/modulus-*` extension packages.
+
+**In core (Step 14):** **Capability Registry** — handshake/`discover` persist descriptor metadata on the state store; `CapabilityRegistry` answers providers/drivers/compat queries. Thin `modulus:capabilities` CLI may read it; optional later UI extras stay out of core.
 
 ## Collaborating parts (not a god object)
 
@@ -24,7 +26,9 @@ Module runtime for InEngine: discover Composer Laravel packages that are modules
 | `ModuleSeeder` / `seed()` | Explicit only: `Modulus::seed($pkg, confirmed: true)`; skeleton seeder always requires confirmation; never on enable |
 | Lifecycle events + `ModuleStateData` | Laravel bus after enable/disable/forget/upgrade/publish/seed |
 | Contracts + DTOs (convention) | Interfaces + readonly payloads; container bindings — see `INTEGRATION.md` |
-| Artisan | list, discover, enable, disable, uninstall, status, **doctor** (incl. missing-module list + repair: install / supply source / substitute — Step 9) |
+| `CapabilityRegistry` | Soft capability tokens / drivers indexed from descriptors into state (Step 14); query without booting disabled providers |
+| `ModuleCapabilityLocator` | Resolve static descriptor for an installed package (convention under provider namespace) |
+| Artisan | list, discover, enable, disable, uninstall, status, **doctor**, **capabilities** (Step 14 read-only) |
 
 ## Module authoring (required template + guidelines)
 
@@ -36,8 +40,9 @@ Modulus-compatible feature modules should be created from **`InEngine/Skeleton`*
 2. Extend `ModuleServiceProvider`; boot only when enabled; standalone if Modulus absent.  
 3. Discovery via `extra.laravel.providers` only.  
 4. Install ≠ enable; Composer acquire/remove belongs in `modulus-composer` / marketplace, not the feature module.  
-5. Ship capability descriptors for `modulus-inspect`.  
-6. SemVer, Pint, Pest, PHPStan; non-destructive disable/uninstall.
+5. Ship a static `ModuleCapabilityDescriptor` (and optional Composer `provide`) so the Capability Registry can index the module when disabled.  
+6. SemVer, Pint, Pest, PHPStan; non-destructive disable/uninstall.  
+7. Multi-implementation peers use **named drivers + Manager**, not one interface rebound by each companion.
 
 ## Discovery scope
 
@@ -56,7 +61,7 @@ Modulus-compatible feature modules should be created from **`InEngine/Skeleton`*
 | `inengine/modulus-composer` (**Modulus Composer**) | Composer require/remove/update; Artisan hooks → discover/publish (install ≠ enable) | Public MIT (Packagist / GitHub) |
 | `inengine/modulus-marketplace` | Browse/search known sources; uses composer client for install | Planned |
 | `inengine/modulus-ui` | Operator UI over Modulus + extension APIs | **Private Pro** (commercial; not public Packagist) |
-| `inengine/modulus-inspect` | Capability inspect / compat / integrate docs | Planned |
+| `inengine/modulus-inspect` | Optional richer inspect/UI over Registry (not system of record) | Deferred; Registry is in core |
 
 Feature modules remain `inengine/{feature}`, not `modulus-*`.
 
@@ -107,4 +112,4 @@ SemVer, Pint, Pest, PHPStan required (same bar as Core and feature modules).
 
 ## Status
 
-Steps **0–11 + 8b** complete. Packagist **beta** `v0.1.0-beta.1` for Modulus + Modulus Composer. Step **13** **in progress** — Alert extends `ModuleServiceProvider` and enables on Core (path). **Not** UI (`modulus-ui` private Pro later). **Next:** finish Alert pilot polish; stable `v0.1.0` when ready.
+Steps **0–13 + 8b** complete (Alert pilot on Core). Packagist **beta** for Modulus + Modulus Composer. **Step 14 in progress** — Capability Registry in core (`docs/STEP-14.md`). **Not** UI (`modulus-ui` private Pro later).

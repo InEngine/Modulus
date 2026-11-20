@@ -9,7 +9,19 @@ namespace InEngine\Modulus\Contracts;
  * other implementation via `config('modulus.store')` or the container.
  * Unknown packages are treated as disabled until registered.
  *
- * @phpstan-type ModuleState array{enabled: bool, version: string|null}
+ * @phpstan-type CapabilityList list<string>
+ * @phpstan-type DriverMap array<string, list<string>>
+ * @phpstan-type ModuleCapabilitiesShape array{
+ *     provides: CapabilityList,
+ *     requires: CapabilityList,
+ *     events: CapabilityList,
+ *     peers: CapabilityList,
+ *     drivers: DriverMap,
+ *     binds: CapabilityList,
+ *     label: string|null,
+ *     description: string|null
+ * }
+ * @phpstan-type ModuleState array{enabled: bool, version: string|null, capabilities?: ModuleCapabilitiesShape}
  */
 interface ModulusStateStore
 {
