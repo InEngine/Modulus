@@ -18,6 +18,13 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-21 — Step 14 Capability Registry (in-core) started
+
+- **Branch:** `feat/step-14-capability-registry`
+- **Done:** Docs (`docs/STEP-14.md`, DESIGN, Plan rewrite); state `capabilities` blob; `CapabilityRegistry` + locator; handshake/`discover` persist descriptors; `modulus:capabilities`; Pest green.
+- **Next:** Skeleton/Alert descriptor polish + Composer `provide` author notes; wire User when implementing hub; PR → `dev`.
+- **Open questions:** Whether display `label` belongs only on descriptor vs separate UI metadata package.
+
 ### 2026-11-19 — Step 11 closed; PHPDoc pass; next Step 13
 
 - **Done:** Step **11** **DONE** — CI gates green (Core/Modulus/Composer/Skeleton), Documentation `ci/` templates, Core↔Modulus integration tests, PHPDoc on Modulus / Modulus Composer / Skeleton `src/` (all types + public/protected methods). Root require stays `*@dev` until intentional Packagist cut.

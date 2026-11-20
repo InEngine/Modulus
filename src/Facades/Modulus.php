@@ -11,7 +11,7 @@ use InEngine\Modulus\ModuleRepository;
  * @method static array disabled()
  * @method static array|null get(string $package)
  * @method static bool isEnabled(string $package)
- * @method static void register(string $package, string|null $version = null)
+ * @method static void register(string $package, string|null $version = null, array|null $capabilities = null)
  * @method static int discover()
  * @method static bool upgrade(string $package, bool $publish = false)
  * @method static int upgradeAll(bool $publish = false)

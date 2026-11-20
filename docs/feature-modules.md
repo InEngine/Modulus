@@ -13,6 +13,7 @@ Start from **[InEngine/Skeleton](https://github.com/InEngine/Skeleton)** (GitHub
 5. When Modulus is absent: boot fully (standalone Spatie package).
 6. Ship migrations that tolerate re-enable (`Schema::hasTable` guards). Disable/uninstall stay non-destructive.
 7. Override lifecycle hooks (`activating`, …) for module-owned side effects; use events for peers/host — see [Integration](integration.md).
+8. Fill `Capabilities\ModuleCapabilityDescriptor` (and optional Composer `provide`) so the [Capability Registry](STEP-14.md) can index the module while disabled.
 
 ## Quality bar
 

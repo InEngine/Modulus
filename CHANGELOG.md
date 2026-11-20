@@ -4,6 +4,10 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Step 14 Capability Registry (in-core): persist descriptor metadata on state; `CapabilityRegistry` query API; `modulus:capabilities` Artisan; `ModuleCapabilityLocator` for disabled modules
+
 ## 0.1.0-beta.2 - 2026-11-20
 
 ### Changed

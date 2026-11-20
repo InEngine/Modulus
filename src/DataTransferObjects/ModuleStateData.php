@@ -5,7 +5,7 @@ namespace InEngine\Modulus\DataTransferObjects;
 /**
  * Typed snapshot of a module's Modulus state for events and cross-boundary payloads.
  *
- * @phpstan-type ModuleState array{enabled: bool, version: string|null}
+ * @phpstan-type ModuleState array{enabled: bool, version: string|null, capabilities?: array<string, mixed>}
  */
 final readonly class ModuleStateData
 {
