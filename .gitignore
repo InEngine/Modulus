@@ -1,9 +1,12 @@
 # Composer Related
 composer.lock
+composer.local.json
+composer.local.dist.json
 /vendor
 
 # Frontend Assets
 /node_modules
+package-lock.json
 
 # Logs
 npm-debug.log
