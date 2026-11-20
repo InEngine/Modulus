@@ -60,6 +60,14 @@ Modulus-compatible feature modules should be created from **`InEngine/Skeleton`*
 
 Feature modules remain `inengine/{feature}`, not `modulus-*`.
 
+### UI display names vs package names
+
+Operator UI must not force “backwards” naming (install UI, then Core, then Composer as separate products). Convention (see Documentation `Module naming and UI.md`):
+
+- **`inengine/modulus-ui`** presents display label **`Modulus`** in the UI (toggle/install “Modulus”).  
+- It **depends on** `inengine/modulus` (and typically composer) so enabling the UI surface pulls the runtime.  
+- **CLI / state / Composer** keep package names (`inengine/modulus-ui`); optional shortcuts install recommended sub-modules by friendly alias.
+
 ## Licensing (platform)
 
 | Work | License / visibility |
