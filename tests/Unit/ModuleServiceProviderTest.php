@@ -4,6 +4,7 @@
  * Unit coverage for {@see ModuleServiceProvider} registration handshake with Modulus.
  */
 
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
 use InEngine\Modulus\Contracts\ModuleMigrator;
@@ -124,6 +125,7 @@ it('registers with Modulus on packageRegistered even when disabled', function ()
             ->and($repo->get('inengine/alert'))->toEqual([
                 'enabled' => false,
                 'version' => '1.2.3',
+                'capabilities' => ModuleCapabilities::empty(),
             ])
             ->and($provider->shouldBootModule())->toBeFalse()
             ->and($provider->isEnabledInModulus())->toBeFalse();

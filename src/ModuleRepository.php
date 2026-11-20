@@ -5,6 +5,8 @@ namespace InEngine\Modulus;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
+use InEngine\Modulus\Capabilities\ModuleCapabilityLocator;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
@@ -70,6 +72,7 @@ class ModuleRepository
         protected ModuleLifecycleRunner $lifecycle,
         protected ModuleDependencyGuard $dependencies,
         protected Dispatcher $events,
+        protected ModuleCapabilityLocator $capabilityLocator,
         protected array $deny = ['inengine/modulus'],
     ) {}
 
@@ -86,6 +89,7 @@ class ModuleRepository
         ModuleLifecycleRunner $lifecycle,
         ModuleDependencyGuard $dependencies,
         Dispatcher $events,
+        ModuleCapabilityLocator $capabilityLocator,
         ConfigRepository $config,
     ): self {
         $deny = $config->get('modulus.discovery.deny', ['inengine/modulus']);
@@ -97,7 +101,7 @@ class ModuleRepository
         /** @var list<string> $denyList */
         $denyList = array_values(array_filter($deny, 'is_string'));
 
-        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $denyList);
+        return new self($store, $discovery, $installedPackages, $migrator, $publisher, $seeders, $lifecycle, $dependencies, $events, $capabilityLocator, $denyList);
     }
 
     /**
@@ -154,28 +158,56 @@ class ModuleRepository
      * When an already-enabled package reports a new version, run the upgrade
      * lifecycle (upgrading → migrate → upgraded) before persisting.
      *
+     * When `$capabilities` is non-null, replace the stored capabilities blob
+     * (Step 14 Capability Registry). Pass null to leave capabilities unchanged.
+     *
      * Resource republish after Composer update is {@see publish()} via
      * modulus-composer — not this handshake path.
+     *
+     * @param  array<string, mixed>|null  $capabilities
      */
-    public function register(string $package, ?string $version = null): void
+    public function register(string $package, ?string $version = null, ?array $capabilities = null): void
     {
+        $normalizedCapabilities = $capabilities !== null
+            ? ModuleCapabilities::normalize($capabilities)
+            : null;
+
         $existing = $this->store->get($package);
 
         if ($existing === null) {
-            $this->store->put($package, [
+            $entry = [
                 'enabled' => $this->isDenied($package),
                 'version' => $version,
-            ]);
+            ];
+
+            if ($normalizedCapabilities !== null) {
+                $entry['capabilities'] = $normalizedCapabilities;
+            }
+
+            $this->store->put($package, $entry);
             $this->discovery->sync();
             $this->dispatchRegistered($package);
 
             return;
         }
 
-        if ($version !== null && $existing['version'] !== $version) {
+        $versionChanged = $version !== null && $existing['version'] !== $version;
+        $capabilitiesChanged = $normalizedCapabilities !== null
+            && ! ModuleCapabilities::equals($existing['capabilities'] ?? null, $normalizedCapabilities);
+
+        if (! $versionChanged && ! $capabilitiesChanged) {
+            return;
+        }
+
+        if ($versionChanged) {
             $wasEnabled = $existing['enabled'] === true;
             $previousVersion = $existing['version'];
             $existing['version'] = $version;
+
+            if ($normalizedCapabilities !== null) {
+                $existing['capabilities'] = $normalizedCapabilities;
+            }
+
             $this->store->put($package, $existing);
 
             if ($wasEnabled) {
@@ -193,11 +225,18 @@ class ModuleRepository
             }
 
             $this->discovery->sync();
+
+            return;
         }
+
+        $existing['capabilities'] = $normalizedCapabilities;
+        $this->store->put($package, $existing);
     }
 
     /**
      * Scan Composer installs for Modulus modules and {@see register()} each.
+     *
+     * Refreshes capability descriptors for disabled modules (providers may not boot).
      *
      * @return int Number of packages newly tracked or version-updated
      */
@@ -210,8 +249,20 @@ class ModuleRepository
                 continue;
             }
 
-            $this->register($package, $this->installedPackages->version($package));
-            $count++;
+            $before = $this->store->get($package);
+            $capabilities = $this->capabilityLocator->locate($package);
+
+            $this->register(
+                $package,
+                $this->installedPackages->version($package),
+                $capabilities,
+            );
+
+            $after = $this->store->get($package);
+
+            if ($before === null || ($before['version'] ?? null) !== ($after['version'] ?? null)) {
+                $count++;
+            }
         }
 
         $this->discovery->sync();

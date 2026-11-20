@@ -3,6 +3,7 @@
 namespace InEngine\Modulus\State;
 
 use Illuminate\Filesystem\Filesystem;
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\CorruptModulusStateException;
 
@@ -216,9 +217,15 @@ class FileModulusStateStore implements ModulusStateStore
             $version = null;
         }
 
-        return [
+        $normalized = [
             'enabled' => (bool) ($entry['enabled'] ?? false),
             'version' => $version,
         ];
+
+        if (isset($entry['capabilities']) && is_array($entry['capabilities'])) {
+            $normalized['capabilities'] = ModuleCapabilities::normalize($entry['capabilities']);
+        }
+
+        return $normalized;
     }
 }

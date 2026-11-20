@@ -7,6 +7,8 @@
  * exercise {@see ModuleRepository} without touching real Composer data.
  */
 
+use InEngine\Modulus\Capabilities\CapabilityRegistry;
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
@@ -78,6 +80,7 @@ function rebindModulusForCommands(?callable $configureLocator = null): void
 
     app()->forgetInstance(ModuleRepository::class);
     app()->forgetInstance(ModulusDoctor::class);
+    app()->forgetInstance(CapabilityRegistry::class);
 }
 
 it('lists modules via modulus:list', function () {
@@ -138,4 +141,24 @@ it('doctor exits non-zero when an enabled module is missing', function () {
     app()->forgetInstance(ModuleRepository::class);
 
     $this->artisan('modulus:doctor')->assertFailed();
+});
+
+it('lists capability tokens via modulus:capabilities', function () {
+    rebindModulusForCommands();
+    app(ModuleRepository::class)->register('inengine/alert', '1.0.0', [
+        'provides' => ['alerts.dispatch'],
+    ]);
+    app(ModuleRepository::class)->enable('inengine/alert');
+
+    $this->artisan('modulus:capabilities', ['--token' => 'alerts.dispatch'])
+        ->expectsOutputToContain('inengine/alert')
+        ->assertSuccessful();
+
+    $this->artisan('modulus:capabilities', ['package' => 'inengine/alert', '--json' => true])
+        ->expectsOutputToContain('alerts.dispatch')
+        ->assertSuccessful();
+
+    expect(app(CapabilityRegistry::class)->hasProvider('alerts.dispatch'))->toBeTrue()
+        ->and(ModuleCapabilities::normalize(['provides' => ['alerts.dispatch']])['provides'])
+        ->toBe(['alerts.dispatch']);
 });

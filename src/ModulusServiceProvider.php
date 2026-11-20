@@ -2,6 +2,9 @@
 
 namespace InEngine\Modulus;
 
+use InEngine\Modulus\Capabilities\CapabilityRegistry;
+use InEngine\Modulus\Capabilities\ModuleCapabilityLocator;
+use InEngine\Modulus\Commands\CapabilitiesCommand;
 use InEngine\Modulus\Commands\DisableModuleCommand;
 use InEngine\Modulus\Commands\DiscoverModulesCommand;
 use InEngine\Modulus\Commands\DoctorCommand;
@@ -80,6 +83,7 @@ class ModulusServiceProvider extends PackageServiceProvider
                 OutdatedModulesCommand::class,
                 UpdateModulesCommand::class,
                 DoctorCommand::class,
+                CapabilitiesCommand::class,
             ]);
     }
 
@@ -133,6 +137,10 @@ class ModulusServiceProvider extends PackageServiceProvider
             );
         });
 
+        $this->app->singleton(ModuleCapabilityLocator::class);
+
+        $this->app->singleton(CapabilityRegistry::class);
+
         $this->app->singleton(ModuleRepository::class, function ($app): ModuleRepository {
             return ModuleRepository::fromConfig(
                 $app->make(ModulusStateStore::class),
@@ -144,6 +152,7 @@ class ModulusServiceProvider extends PackageServiceProvider
                 $app->make(ModuleLifecycleRunner::class),
                 $app->make(ModuleDependencyGuard::class),
                 $app['events'],
+                $app->make(ModuleCapabilityLocator::class),
                 $app['config'],
             );
         });

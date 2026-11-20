@@ -60,7 +60,7 @@ Prefer `Modulus` facade / `ModuleRepository` over the state store or discovery s
 
 - Owning module: `ModuleLifecycle` hooks.
 - Peers/host: `InEngine\Modulus\Events\*` + `ModuleStateData`.
-- Contracts + DTOs via container bindings. No custom plugin registry. See `INTEGRATION.md`.
+- Contracts + DTOs via container bindings. Soft discovery: `CapabilityRegistry` (tokens/drivers on state) — not a service locator. See `INTEGRATION.md` / `docs/STEP-14.md`.
 
 ## Quality
 

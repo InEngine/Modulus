@@ -101,7 +101,7 @@ Default host constraint policy: **patch** → `~x.y.z`. Minor/major bumps need a
 | [`inengine/modulus-composer`](https://github.com/InEngine/Modulus-Composer) | **Modulus Composer** | Composer require/remove/update/approve, constraint rewrite, `ModuleUpdateApplier` (public MIT; opt-in) |
 | `inengine/modulus-marketplace` | (planned) | Browse / install sources |
 | `inengine/modulus-ui` | (planned) | Operator UI — **private Pro** |
-| `inengine/modulus-inspect` | (planned) | Capability catalog |
+| `inengine/modulus-inspect` | (deferred) | Optional UX over in-core Capability Registry |
 
 ## Testing
 

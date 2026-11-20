@@ -3,6 +3,7 @@
 namespace InEngine\Modulus;
 
 use Composer\InstalledVersions;
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
 use InEngine\Modulus\Contracts\ModuleLifecycle;
 use InEngine\Modulus\Contracts\ModuleSeeder;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -164,6 +165,61 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
     }
 
     /**
+     * Optional FQCN of this module's static capability descriptor.
+     *
+     * Null uses `{ProviderNamespace}\Capabilities\ModuleCapabilityDescriptor`.
+     *
+     * @return class-string|null
+     */
+    public function modulusCapabilityDescriptorClass(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Capability payload persisted on register / discover (readable when disabled via locator).
+     *
+     * @return array{
+     *     provides: list<string>,
+     *     requires: list<string>,
+     *     events: list<string>,
+     *     peers: list<string>,
+     *     drivers: array<string, list<string>>,
+     *     binds: list<string>,
+     *     label: string|null,
+     *     description: string|null
+     * }
+     */
+    public function modulusCapabilities(): array
+    {
+        $class = $this->modulusCapabilityDescriptorClass()
+            ?? $this->conventionalCapabilityDescriptorClass();
+
+        if ($class === null || ! class_exists($class) || ! method_exists($class, 'toArray')) {
+            return ModuleCapabilities::empty();
+        }
+
+        /** @var array<string, mixed> $payload */
+        $payload = $class::toArray();
+
+        return ModuleCapabilities::normalize($payload);
+    }
+
+    /**
+     * @return class-string|null
+     */
+    protected function conventionalCapabilityDescriptorClass(): ?string
+    {
+        $namespace = (new \ReflectionClass($this))->getNamespaceName();
+
+        if ($namespace === '') {
+            return null;
+        }
+
+        return $namespace.'\\Capabilities\\ModuleCapabilityDescriptor';
+    }
+
+    /**
      * Register this package with Modulus when the runtime is present.
      */
     protected function registerWithModulus(): void
@@ -175,6 +231,7 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
         $this->modulusRepository()->register(
             $this->modulusPackageName(),
             $this->modulusPackageVersion(),
+            $this->modulusCapabilities(),
         );
     }
 
