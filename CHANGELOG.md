@@ -4,6 +4,13 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+## 0.1.0-beta.2 - 2026-11-20
+
+### Changed
+
+- `extra.branch-alias` `dev-main` → `0.1.x-dev` so path `*@dev` resolves against `^0.1@beta` dependents
+- Docs: Packagist beta + Step 13 Alert pilot notes
+
 ## 0.1.0-beta.1 - 2026-11-20
 
 ### Added
