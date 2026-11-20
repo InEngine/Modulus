@@ -5,11 +5,12 @@ namespace InEngine\Modulus\Commands;
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
+use InEngine\Modulus\ModuleRepository;
 
 /**
  * Artisan `modulus:status {package}` — show Composer vs Modulus state for one package.
  *
- * Combines {@see \InEngine\Modulus\ModuleRepository::get()} with {@see \InEngine\Modulus\Contracts\InstalledPackageLocator}.
+ * Combines {@see ModuleRepository::get()} with {@see InstalledPackageLocator}.
  */
 class StatusModuleCommand extends Command
 {

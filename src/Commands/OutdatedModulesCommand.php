@@ -9,7 +9,7 @@ use InEngine\Modulus\Updates\ModuleUpdateNotifier;
 /**
  * Artisan `modulus:outdated` — list available Composer updates for Modulus modules.
  *
- * Delegates to {@see \InEngine\Modulus\Updates\ModuleUpdateNotifier::check()} and dispatches update events
+ * Delegates to {@see ModuleUpdateNotifier::check()} and dispatches update events
  * for UI listeners.
  */
 class OutdatedModulesCommand extends Command

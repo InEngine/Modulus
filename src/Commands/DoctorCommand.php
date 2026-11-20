@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\DataTransferObjects\DoctorFinding;
+use InEngine\Modulus\DataTransferObjects\DoctorReport;
 use InEngine\Modulus\Diagnostics\ModulusDoctor;
 
 /**
  * Artisan `modulus:doctor` — diagnose state, missing packages, dependencies, and upgrade-policy issues.
  *
- * Renders the {@see \InEngine\Modulus\DataTransferObjects\DoctorReport} built by {@see ModulusDoctor::run()}.
+ * Renders the {@see DoctorReport} built by {@see ModulusDoctor::run()}.
  */
 class DoctorCommand extends Command
 {

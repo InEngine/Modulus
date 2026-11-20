@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 use Throwable;
 
 /**
  * Artisan `modulus:uninstall {package}` — remove a module from Modulus state (Composer remove is modulus-composer).
  *
- * Delegates to {@see \InEngine\Modulus\ModuleRepository::uninstall()}.
+ * Delegates to {@see ModuleRepository::uninstall()}.
  */
 class UninstallModuleCommand extends Command
 {

@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 use Throwable;
 
 /**
  * Artisan `modulus:seed {package} {--force}` — run a module seeder after confirmation.
  *
- * Delegates to {@see \InEngine\Modulus\ModuleRepository::seed()}. `--force` skips the confirmation prompt.
+ * Delegates to {@see ModuleRepository::seed()}. `--force` skips the confirmation prompt.
  */
 class SeedModuleCommand extends Command
 {

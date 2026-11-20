@@ -2,6 +2,7 @@
 
 namespace InEngine\Modulus\Commands\Concerns;
 
+use Illuminate\Console\Command;
 use InEngine\Modulus\Exceptions\MissingModuleException;
 use InEngine\Modulus\Exceptions\ModuleHasDependentsException;
 use InEngine\Modulus\Exceptions\ModuleSeederMissingException;
@@ -13,12 +14,12 @@ use Throwable;
 /**
  * Shared helpers for Modulus Artisan commands.
  *
- * Resolves the {@see \InEngine\Modulus\ModuleRepository} facade-level orchestrator and maps expected
- * domain exceptions to a failure exit code. Intended for use on {@see \Illuminate\Console\Command} subclasses.
+ * Resolves the {@see ModuleRepository} facade-level orchestrator and maps expected
+ * domain exceptions to a failure exit code. Intended for use on {@see Command} subclasses.
  */
 trait InteractsWithModulus
 {
-    /** Resolve the {@see \InEngine\Modulus\ModuleRepository} from the container. */
+    /** Resolve the {@see ModuleRepository} from the container. */
     protected function modulus(): ModuleRepository
     {
         return app(ModuleRepository::class);

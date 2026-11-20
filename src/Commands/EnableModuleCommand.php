@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 use Throwable;
 
 /**
  * Artisan `modulus:enable {package}` — enable a tracked module (deps, migrate, discovery sync).
  *
- * Delegates to {@see \InEngine\Modulus\ModuleRepository::enable()}.
+ * Delegates to {@see ModuleRepository::enable()}.
  */
 class EnableModuleCommand extends Command
 {

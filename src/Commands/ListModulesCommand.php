@@ -4,11 +4,12 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 
 /**
  * Artisan `modulus:list` — list Modulus-tracked modules with enabled state and version.
  *
- * Reads {@see \InEngine\Modulus\ModuleRepository::all()}.
+ * Reads {@see ModuleRepository::all()}.
  */
 class ListModulesCommand extends Command
 {

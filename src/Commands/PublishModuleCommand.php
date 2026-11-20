@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 use Throwable;
 
 /**
  * Artisan `modulus:publish {package}` — publish module config/assets into the host (install/update path).
  *
- * Delegates to {@see \InEngine\Modulus\ModuleRepository::publish()}.
+ * Delegates to {@see ModuleRepository::publish()}.
  */
 class PublishModuleCommand extends Command
 {

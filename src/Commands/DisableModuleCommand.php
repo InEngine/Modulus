@@ -4,12 +4,13 @@ namespace InEngine\Modulus\Commands;
 
 use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
+use InEngine\Modulus\ModuleRepository;
 use Throwable;
 
 /**
  * Artisan `modulus:disable {package}` — disable a tracked module (non-destructive).
  *
- * Delegates to {@see \InEngine\Modulus\ModuleRepository::disable()}.
+ * Delegates to {@see ModuleRepository::disable()}.
  */
 class DisableModuleCommand extends Command
 {
