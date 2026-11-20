@@ -16,7 +16,7 @@ Feature modules register with Modulus when it is present and stay **disabled unt
 ## Installation
 
 ```bash
-composer require inengine/modulus
+composer require inengine/modulus:^0.1@beta
 php artisan vendor:publish --tag="modulus-config"
 ```
 
@@ -24,7 +24,7 @@ No migrations for the registry — state defaults to a JSON file under `storage/
 
 > **InEngine Core:** Modulus is **required automatically**. [InEngine Core](https://github.com/InEngine/Core) already lists `inengine/modulus` in `composer.json` and installs the early-boot hook. You do **not** need a separate `composer require` when starting from Core.
 
-Until Packagist publishes a release, path/VCS installs work the same way (see Core `composer.local.json` for monorepo develop).
+Beta: `^0.1@beta`. Stable `^0.1` after the first non-beta tag. Monorepo develop: Core `composer.local.json` path `*@dev`.
 
 ## Using Modulus in a Laravel app (not InEngine Core)
 

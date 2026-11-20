@@ -4,10 +4,16 @@ All notable changes to `Modulus` will be documented in this file.
 
 ## Unreleased
 
+## 0.1.0-beta.1 - 2026-11-20
+
+### Added
+
+- First public beta on Packagist / GitHub Releases
+
 ### Changed
 
 - Relicense as MIT
-- Packagist-ready metadata (homepage, description); hold submit/tags until intentional release
+- Packagist-ready metadata (homepage, description)
 
 ### Step 9 — Artisan surface, doctor, upgrades + update notices
 
