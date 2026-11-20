@@ -7,7 +7,7 @@ All notable changes to `Modulus` will be documented in this file.
 ### Changed
 
 - Relicense as MIT
-- Packagist-ready metadata (homepage, description); target first public tag `v0.1.0`
+- Packagist-ready metadata (homepage, description); hold submit/tags until intentional release
 
 ### Step 9 — Artisan surface, doctor, upgrades + update notices
 
