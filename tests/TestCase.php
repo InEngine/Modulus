@@ -2,6 +2,8 @@
 
 namespace InEngine\Modulus\Tests;
 
+use Illuminate\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 use InEngine\Modulus\ModulusServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -17,8 +19,8 @@ class TestCase extends Orchestra
     /**
      * Register package service providers with the Testbench application.
      *
-     * @param  \Illuminate\Foundation\Application  $app
-     * @return array<int, class-string<\Illuminate\Support\ServiceProvider>>
+     * @param  Application  $app
+     * @return array<int, class-string<ServiceProvider>>
      */
     protected function getPackageProviders($app)
     {
@@ -33,7 +35,7 @@ class TestCase extends Orchestra
      * Uses the `testing` database connection, a unique temp `modulus.state_path`
      * with fsync disabled, and the `patch` upgrade policy with `auto_apply_installed` on.
      *
-     * @param  \Illuminate\Foundation\Application  $app
+     * @param  Application  $app
      */
     public function getEnvironmentSetUp($app)
     {

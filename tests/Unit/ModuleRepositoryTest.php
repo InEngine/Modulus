@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\ModuleRepository} state transitions, lifecycle hooks, guards, and events.
+ * Unit coverage for {@see ModuleRepository} state transitions, lifecycle hooks, guards, and events.
  */
 
 use Illuminate\Contracts\Events\Dispatcher;

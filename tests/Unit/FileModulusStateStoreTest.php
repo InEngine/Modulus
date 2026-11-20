@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\State\FileModulusStateStore} and
- * {@see \InEngine\Modulus\State\FileModulusStateStoreFactory} JSON persistence, atomic writes, and corruption handling.
+ * Unit coverage for {@see FileModulusStateStore} and
+ * {@see FileModulusStateStoreFactory} JSON persistence, atomic writes, and corruption handling.
  */
 
 use Illuminate\Filesystem\Filesystem;

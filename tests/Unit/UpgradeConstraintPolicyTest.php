@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Upgrades\UpgradeConstraintPolicy} constraint suggestions and acceptance per policy.
+ * Unit coverage for {@see UpgradeConstraintPolicy} constraint suggestions and acceptance per policy.
  */
 
 use InEngine\Modulus\Upgrades\UpgradeConstraintPolicy;

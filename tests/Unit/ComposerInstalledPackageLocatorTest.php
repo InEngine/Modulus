@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Composer\ComposerInstalledPackageLocator} reading installed package metadata.
+ * Unit coverage for {@see ComposerInstalledPackageLocator} reading installed package metadata.
  */
 
 use InEngine\Modulus\Composer\ComposerInstalledPackageLocator;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer} forgetting the bound `PackageManifest` singleton.
+ * Unit coverage for {@see FilteringPackageDiscoverySyncer} forgetting the bound `PackageManifest` singleton.
  */
 
 use Illuminate\Foundation\PackageManifest;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Diagnostics\ModulusDoctor} findings (missing packages, constraint policy, updates, dependencies).
+ * Unit coverage for {@see ModulusDoctor} findings (missing packages, constraint policy, updates, dependencies).
  */
 
 use Illuminate\Filesystem\Filesystem;

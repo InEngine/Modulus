@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Publish\PathModulePublisher} publishing config and assets from a package install path.
+ * Unit coverage for {@see PathModulePublisher} publishing config and assets from a package install path.
  */
 
 use Illuminate\Filesystem\Filesystem;

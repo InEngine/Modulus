@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Integration-style coverage of {@see \InEngine\Modulus\ModuleRepository} with
- * {@see \InEngine\Modulus\Discovery\FilteringPackageDiscoverySyncer} and
- * {@see \InEngine\Modulus\Discovery\FilteringPackageManifest}.
+ * Integration-style coverage of {@see ModuleRepository} with
+ * {@see FilteringPackageDiscoverySyncer} and
+ * {@see FilteringPackageManifest}.
  */
 
 use Illuminate\Contracts\Events\Dispatcher;
@@ -24,7 +24,7 @@ use InEngine\Modulus\State\FileModulusStateStore;
  * Build permissive Mockery doubles for {@see ModuleRepository} collaborators not under test here.
  *
  * @return array{0: ModuleMigrator, 1: ModulePublisher, 2: ModuleSeederRunner, 3: ModuleLifecycleRunner, 4: ModuleDependencyGuard, 5: Dispatcher}
- *                                                                                                  Migrator, publisher, seeders, lifecycle, dependency guard, event dispatcher.
+ *                                                                                                                                                Migrator, publisher, seeders, lifecycle, dependency guard, event dispatcher.
  */
 function moduleRepositoryLifecycleDoubles(): array
 {

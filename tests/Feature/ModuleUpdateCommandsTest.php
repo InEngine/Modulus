@@ -2,8 +2,8 @@
 
 /**
  * Feature coverage for `modulus:outdated` and `modulus:update`, including
- * {@see \InEngine\Modulus\Events\ModuleUpdateAvailable} dispatch and auto-apply via
- * {@see \InEngine\Modulus\Contracts\ModuleUpdateApplier}.
+ * {@see ModuleUpdateAvailable} dispatch and auto-apply via
+ * {@see ModuleUpdateApplier}.
  */
 
 use Illuminate\Support\Facades\Event;

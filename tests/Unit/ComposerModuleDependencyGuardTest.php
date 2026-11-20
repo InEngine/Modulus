@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Dependencies\ComposerModuleDependencyGuard} enable/disable dependency checks.
+ * Unit coverage for {@see ComposerModuleDependencyGuard} enable/disable dependency checks.
  */
 
 use Illuminate\Filesystem\Filesystem;
@@ -19,7 +19,7 @@ use Mockery\MockInterface;
  * denies `inengine/modulus` from being managed. Pair with `dependencyGuardCleanup()`.
  *
  * @return array{0: string, 1: string, 2: FileModulusStateStore, 3: ComposerModuleDependencyGuard, 4: InstalledPackageLocator&MockInterface}
- *                                                                                                 Temp directory, state file path, store, guard, locator mock.
+ *                                                                                                                                           Temp directory, state file path, store, guard, locator mock.
  */
 function dependencyGuardFixture(): array
 {

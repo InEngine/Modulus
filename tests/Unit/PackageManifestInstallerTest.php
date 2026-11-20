@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Discovery\PackageManifestInstaller} rebinding the package manifest to
- * {@see \InEngine\Modulus\Discovery\FilteringPackageManifest} before provider registration.
+ * Unit coverage for {@see PackageManifestInstaller} rebinding the package manifest to
+ * {@see FilteringPackageManifest} before provider registration.
  */
 
 use Illuminate\Foundation\Application;

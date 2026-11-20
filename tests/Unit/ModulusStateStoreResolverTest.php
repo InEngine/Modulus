@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\State\ModulusStateStoreResolver} resolving the configured
- * {@see \InEngine\Modulus\Contracts\ModulusStateStore} implementation from `modulus.store`.
+ * Unit coverage for {@see ModulusStateStoreResolver} resolving the configured
+ * {@see ModulusStateStore} implementation from `modulus.store`.
  */
 
 use Illuminate\Filesystem\Filesystem;

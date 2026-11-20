@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Seeding\ResolvingModuleSeederRunner} seeder resolution from module providers.
+ * Unit coverage for {@see ResolvingModuleSeederRunner} seeder resolution from module providers.
  */
 
 use InEngine\Modulus\Contracts\InstalledPackageLocator;

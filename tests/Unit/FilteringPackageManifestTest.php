@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Discovery\FilteringPackageManifest} filtering providers by module state.
+ * Unit coverage for {@see FilteringPackageManifest} filtering providers by module state.
  */
 
 use Illuminate\Filesystem\Filesystem;
@@ -16,7 +16,7 @@ use InEngine\Modulus\State\FileModulusStateStore;
  * @param  array<string, mixed>  $manifest  Package manifest contents written to `packages.php`.
  * @param  array<string, array{enabled: bool, version: string|null}>  $state  Module state written to `modules.json`; omitted when empty.
  * @return array{0: string, 1: string, 2: string, 3: FileModulusStateStore, 4: FilteringPackageManifest}
- *                                                                                    Temp directory, manifest path, state path, store, filtering manifest.
+ *                                                                                                       Temp directory, manifest path, state path, store, filtering manifest.
  */
 function filteringManifestFixture(array $manifest, array $state = []): array
 {

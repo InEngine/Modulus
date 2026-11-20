@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\ModuleServiceProvider} registration handshake with Modulus.
+ * Unit coverage for {@see ModuleServiceProvider} registration handshake with Modulus.
  */
 
 use InEngine\Modulus\Contracts\InstalledPackageLocator;

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit coverage for {@see \InEngine\Modulus\Migration\PathModuleMigrator} running migrations from a package install path.
+ * Unit coverage for {@see PathModuleMigrator} running migrations from a package install path.
  */
 
 use Illuminate\Database\Migrations\Migrator;

@@ -4,7 +4,7 @@
  * Feature coverage for `modulus:*` Artisan commands (list, enable, disable, publish, upgrade, seed, doctor).
  *
  * Binds file-backed state and mocked collaborators via `rebindModulusForCommands()` so commands
- * exercise {@see \InEngine\Modulus\ModuleRepository} without touching real Composer data.
+ * exercise {@see ModuleRepository} without touching real Composer data.
  */
 
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
@@ -19,6 +19,7 @@ use InEngine\Modulus\Contracts\PackageDiscoverySyncer;
 use InEngine\Modulus\Diagnostics\ModulusDoctor;
 use InEngine\Modulus\ModuleRepository;
 use InEngine\Modulus\State\FileModulusStateStore;
+use Mockery\MockInterface;
 
 /**
  * Rebind Modulus collaborators in the container with file-backed state and Mockery doubles.
@@ -28,8 +29,8 @@ use InEngine\Modulus\State\FileModulusStateStore;
  * are mocked with permissive defaults. Forgets cached {@see ModuleRepository} and
  * {@see ModulusDoctor} instances so Artisan commands resolve the new bindings.
  *
- * @param  (callable(\Mockery\MockInterface&InstalledPackageLocator): void)|null  $configureLocator  Customize
- *                                                                                                     the locator mock before it is bound.
+ * @param  (callable(MockInterface&InstalledPackageLocator): void)|null  $configureLocator  Customize
+ *                                                                                          the locator mock before it is bound.
  */
 function rebindModulusForCommands(?callable $configureLocator = null): void
 {
