@@ -122,6 +122,7 @@ final class ComposerOutdatedUpdateChecker implements ModuleUpdateChecker
         return $rows;
     }
 
+    /** Whether $version satisfies the Composer $constraint; invalid constraints yield false. */
     protected function satisfies(string $version, string $constraint): bool
     {
         try {
@@ -131,6 +132,7 @@ final class ComposerOutdatedUpdateChecker implements ModuleUpdateChecker
         }
     }
 
+    /** Whether a package is tracked in state or ships a {@see ModuleServiceProvider}. */
     protected function isModulusModule(string $package): bool
     {
         if ($this->store->get($package) !== null) {

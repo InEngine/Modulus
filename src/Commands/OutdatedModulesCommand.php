@@ -6,12 +6,19 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\DataTransferObjects\AvailableModuleUpdate;
 use InEngine\Modulus\Updates\ModuleUpdateNotifier;
 
+/**
+ * Artisan `modulus:outdated` — list available Composer updates for Modulus modules.
+ *
+ * Delegates to {@see \InEngine\Modulus\Updates\ModuleUpdateNotifier::check()} and dispatches update events
+ * for UI listeners.
+ */
 class OutdatedModulesCommand extends Command
 {
     protected $signature = 'modulus:outdated';
 
     protected $description = 'List available Composer updates for Modulus modules (notifies UI listeners)';
 
+    /** Print a table of available updates; always returns success. */
     public function handle(ModuleUpdateNotifier $notifier): int
     {
         $updates = $notifier->check(dispatch: true);

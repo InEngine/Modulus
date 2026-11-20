@@ -30,6 +30,11 @@ final class ModulusDoctor
         protected array $deny = ['inengine/modulus'],
     ) {}
 
+    /**
+     * Inspect state, Composer installs, constraints, dependencies, and updates.
+     *
+     * A corrupt state file short-circuits into a single error finding with `stateHealthy` false.
+     */
     public function run(): DoctorReport
     {
         $findings = [];
@@ -134,6 +139,7 @@ final class ModulusDoctor
         );
     }
 
+    /** Convert an available update into an `update_available` finding (info for patches, warning otherwise). */
     protected function findingForUpdate(AvailableModuleUpdate $update): DoctorFinding
     {
         $severity = $update->isNonBreaking()

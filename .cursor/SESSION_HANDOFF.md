@@ -18,10 +18,16 @@ Use this file so new chats pick up **package work**, **branch focus**, and **nex
 
 <!-- SESSION_LOG_START -->
 
+### 2026-11-19 — Step 11 closed; PHPDoc pass; next Step 13
+
+- **Done:** Step **11** **DONE** — CI gates green (Core/Modulus/Composer/Skeleton), Documentation `ci/` templates, Core↔Modulus integration tests, PHPDoc on Modulus / Modulus Composer / Skeleton `src/` (all types + public/protected methods). Root require stays `*@dev` until intentional Packagist cut.
+- **Next:** Step **13** — Alert pilot from Skeleton on Core Herd.
+- **Open questions:** When to cut Packagist / GitHub Release (held; not blocking 13).
+
 ### 2026-11-19 — Step 11 start: splash Core + public Modulus packages
 
-- **Done:** Core splash-only UI; require modulus `^0.1`; release strips `composer.local.json`. Modulus + Modulus-Composer **public**, `v0.1.0` tagged/released. Packagist checklist in Documentation/Packagist.md.
-- **Next:** Submit `inengine/modulus` + `inengine/modulus-composer` on packagist.org (webhook). Continue Step 11 quality-gate audit; Step 13 Alert pilot.
+- **Done:** Core splash-only UI; Modulus + Modulus-Composer **public**. Premature `v0.1.0` tags removed; Packagist held.
+- **Next:** *(Superseded — Step 11 closed.)*
 - **Open questions:** Packagist org credentials / maintainer account.
 
 ### 2026-11-19 — Step 10 closed; ready for Step 11/13

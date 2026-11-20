@@ -178,6 +178,7 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
         );
     }
 
+    /** Resolve the {@see ModuleRepository} from the container. */
     protected function modulusRepository(): ModuleRepository
     {
         return $this->app->make(ModuleRepository::class);

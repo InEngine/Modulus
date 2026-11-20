@@ -6,12 +6,18 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\DataTransferObjects\DoctorFinding;
 use InEngine\Modulus\Diagnostics\ModulusDoctor;
 
+/**
+ * Artisan `modulus:doctor` — diagnose state, missing packages, dependencies, and upgrade-policy issues.
+ *
+ * Renders the {@see \InEngine\Modulus\DataTransferObjects\DoctorReport} built by {@see ModulusDoctor::run()}.
+ */
 class DoctorCommand extends Command
 {
     protected $signature = 'modulus:doctor';
 
     protected $description = 'Diagnose Modulus state, missing packages, deps, and upgrade-policy issues';
 
+    /** Print the doctor report; returns {@see self::FAILURE} when any finding is an error. */
     public function handle(ModulusDoctor $doctor): int
     {
         $report = $doctor->run();
@@ -52,6 +58,7 @@ class DoctorCommand extends Command
         return self::SUCCESS;
     }
 
+    /** Console color name for a {@see DoctorFinding} severity. */
     protected function color(string $severity): string
     {
         return match ($severity) {

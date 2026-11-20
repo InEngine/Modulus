@@ -6,6 +6,11 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 
+/**
+ * Artisan `modulus:status {package}` — show Composer vs Modulus state for one package.
+ *
+ * Combines {@see \InEngine\Modulus\ModuleRepository::get()} with {@see \InEngine\Modulus\Contracts\InstalledPackageLocator}.
+ */
 class StatusModuleCommand extends Command
 {
     use InteractsWithModulus;
@@ -14,6 +19,7 @@ class StatusModuleCommand extends Command
 
     protected $description = 'Show Composer vs Modulus state for one package';
 
+    /** Print a status table for the given package; always returns success. */
     public function handle(InstalledPackageLocator $packages): int
     {
         $package = (string) $this->argument('package');

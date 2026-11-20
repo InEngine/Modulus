@@ -14,6 +14,11 @@ final class SemverBumpClassifier
         protected VersionParser $parser = new VersionParser,
     ) {}
 
+    /**
+     * Classify the bump between two versions.
+     *
+     * @return string One of the {@see AvailableModuleUpdate} `BUMP_*` constants (`unknown` when unparsable or identical).
+     */
     public function classify(string $from, string $to): string
     {
         try {

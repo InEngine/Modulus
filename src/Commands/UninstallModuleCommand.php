@@ -6,6 +6,11 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use Throwable;
 
+/**
+ * Artisan `modulus:uninstall {package}` — remove a module from Modulus state (Composer remove is modulus-composer).
+ *
+ * Delegates to {@see \InEngine\Modulus\ModuleRepository::uninstall()}.
+ */
 class UninstallModuleCommand extends Command
 {
     use InteractsWithModulus;
@@ -14,6 +19,7 @@ class UninstallModuleCommand extends Command
 
     protected $description = 'Remove a module from Modulus state (Composer remove is modulus-composer)';
 
+    /** Forget the given package from state; returns failure on handled Modulus errors. */
     public function handle(): int
     {
         $package = (string) $this->argument('package');

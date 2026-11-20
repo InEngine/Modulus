@@ -24,11 +24,17 @@ final class UpgradeConstraintPolicy
         }
     }
 
+    /**
+     * Build from the raw `modulus.upgrades.default_constraint` value; non-string/empty falls back to patch.
+     *
+     * @param  mixed  $value  Config value.
+     */
     public static function fromConfig(mixed $value): self
     {
         return new self(is_string($value) && $value !== '' ? $value : self::PATCH);
     }
 
+    /** The active policy name (`patch`, `minor`, or `major`). */
     public function policy(): string
     {
         return $this->policy;

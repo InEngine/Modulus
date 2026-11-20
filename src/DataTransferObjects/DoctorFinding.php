@@ -24,6 +24,7 @@ final readonly class DoctorFinding
         public array $suggestions = [],
     ) {}
 
+    /** Whether this finding has {@see SEVERITY_ERROR} severity. */
     public function isError(): bool
     {
         return $this->severity === self::SEVERITY_ERROR;

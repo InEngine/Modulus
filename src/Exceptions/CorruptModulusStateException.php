@@ -9,11 +9,22 @@ use RuntimeException;
  */
 class CorruptModulusStateException extends RuntimeException
 {
+    /**
+     * State file contents are not valid JSON.
+     *
+     * @param  string  $path  State file path.
+     * @param  string  $jsonError  Message from the JSON decoder.
+     */
     public static function invalidJson(string $path, string $jsonError): self
     {
         return new self("Modulus state file at [{$path}] contains invalid JSON: {$jsonError}");
     }
 
+    /**
+     * State file decoded, but not to a JSON object keyed by package name.
+     *
+     * @param  string  $path  State file path.
+     */
     public static function invalidShape(string $path): self
     {
         return new self("Modulus state file at [{$path}] must decode to a JSON object keyed by package name.");

@@ -7,6 +7,12 @@ use InEngine\Modulus\Contracts\ModuleUpdateApplier;
 use InEngine\Modulus\Updates\ModuleUpdateNotifier;
 use InEngine\Modulus\Updates\NullModuleUpdateApplier;
 
+/**
+ * Artisan `modulus:update {--auto} {--check}` — check for module updates and optionally auto-apply non-breaking patches.
+ *
+ * Falls back to `modulus:outdated` unless `--auto` is set; auto-apply requires
+ * `modulus.updates.auto_patch` and a bound {@see \InEngine\Modulus\Contracts\ModuleUpdateApplier}.
+ */
 class UpdateModulesCommand extends Command
 {
     protected $signature = 'modulus:update
@@ -15,6 +21,7 @@ class UpdateModulesCommand extends Command
 
     protected $description = 'Check for module updates and optionally auto-apply non-breaking patches';
 
+    /** Check or auto-apply patch updates; returns failure when auto-apply is requested but disabled or unavailable. */
     public function handle(ModuleUpdateNotifier $notifier, ModuleUpdateApplier $applier): int
     {
         if ($this->option('check') || ! $this->option('auto')) {

@@ -6,6 +6,11 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use Throwable;
 
+/**
+ * Artisan `modulus:enable {package}` — enable a tracked module (deps, migrate, discovery sync).
+ *
+ * Delegates to {@see \InEngine\Modulus\ModuleRepository::enable()}.
+ */
 class EnableModuleCommand extends Command
 {
     use InteractsWithModulus;
@@ -14,6 +19,7 @@ class EnableModuleCommand extends Command
 
     protected $description = 'Enable a Modulus module (deps, migrate, discovery sync)';
 
+    /** Enable the given package; returns failure when dependencies are unmet or the module is missing. */
     public function handle(): int
     {
         $package = (string) $this->argument('package');

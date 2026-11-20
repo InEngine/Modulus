@@ -7,6 +7,12 @@ use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use InEngine\Modulus\Upgrades\UpgradeConstraintPolicy;
 use Throwable;
 
+/**
+ * Artisan `modulus:upgrade {package?} {--publish} {--approve=}` — apply installed Composer versions (migrate/hooks) for one or all tracked modules.
+ *
+ * Delegates to {@see \InEngine\Modulus\ModuleRepository::upgrade()} / {@see \InEngine\Modulus\ModuleRepository::upgradeAll()}.
+ * `--approve=` only prints suggested constraint guidance; it does not rewrite composer.json.
+ */
 class UpgradeModulesCommand extends Command
 {
     use InteractsWithModulus;
@@ -18,6 +24,7 @@ class UpgradeModulesCommand extends Command
 
     protected $description = 'Apply installed Composer versions (migrate/hooks); optional publish / approve messaging';
 
+    /** Upgrade the given package or all tracked packages; returns failure on handled Modulus errors. */
     public function handle(): int
     {
         $package = $this->argument('package');

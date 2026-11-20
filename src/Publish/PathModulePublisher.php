@@ -178,6 +178,7 @@ final class PathModulePublisher implements ModulePublisher
         return substr($package, $position + 1);
     }
 
+    /** Whether a publish option is on, falling back to $default when unset. */
     protected function enabled(string $key, bool $default): bool
     {
         $value = $this->options[$key] ?? $default;

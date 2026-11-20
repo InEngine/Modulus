@@ -138,6 +138,7 @@ class ModuleRepository
         return $this->store->get($package);
     }
 
+    /** Whether a package is enabled; denied packages (e.g. Modulus itself) always count as enabled. */
     public function isEnabled(string $package): bool
     {
         if ($this->isDenied($package)) {
@@ -487,16 +488,19 @@ class ModuleRepository
         $this->forget($package);
     }
 
+    /** Whether a package is on the discovery deny list (`modulus.discovery.deny`). */
     public function isDenied(string $package): bool
     {
         return in_array($package, $this->deny, true);
     }
 
+    /** Dispatch {@see ModuleRegistered} for the package's current state. */
     protected function dispatchRegistered(string $package): void
     {
         $this->events->dispatch(new ModuleRegistered($this->stateData($package)));
     }
 
+    /** Dispatch {@see ModuleManualAttentionRequired} when the module's provider reports operator items. */
     protected function dispatchManualAttentionIfAny(string $package): void
     {
         $items = [];
@@ -527,6 +531,7 @@ class ModuleRepository
         ));
     }
 
+    /** Whether a package is tracked, denied, or ships a {@see ModuleServiceProvider}. */
     protected function looksLikeModulusModule(string $package): bool
     {
         if ($this->store->get($package) !== null || $this->isDenied($package)) {
@@ -542,6 +547,7 @@ class ModuleRepository
         return false;
     }
 
+    /** Build a {@see ModuleStateData} snapshot; untracked packages appear disabled with no version. */
     protected function stateData(string $package): ModuleStateData
     {
         $state = $this->store->get($package);

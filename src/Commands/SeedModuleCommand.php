@@ -6,6 +6,11 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use Throwable;
 
+/**
+ * Artisan `modulus:seed {package} {--force}` — run a module seeder after confirmation.
+ *
+ * Delegates to {@see \InEngine\Modulus\ModuleRepository::seed()}. `--force` skips the confirmation prompt.
+ */
 class SeedModuleCommand extends Command
 {
     use InteractsWithModulus;
@@ -16,6 +21,7 @@ class SeedModuleCommand extends Command
 
     protected $description = 'Run a module seeder (requires confirmation unless --force)';
 
+    /** Seed the given package; returns success when cancelled at the prompt, failure on handled Modulus errors. */
     public function handle(): int
     {
         $package = (string) $this->argument('package');

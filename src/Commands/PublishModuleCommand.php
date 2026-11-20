@@ -6,6 +6,11 @@ use Illuminate\Console\Command;
 use InEngine\Modulus\Commands\Concerns\InteractsWithModulus;
 use Throwable;
 
+/**
+ * Artisan `modulus:publish {package}` — publish module config/assets into the host (install/update path).
+ *
+ * Delegates to {@see \InEngine\Modulus\ModuleRepository::publish()}.
+ */
 class PublishModuleCommand extends Command
 {
     use InteractsWithModulus;
@@ -14,6 +19,7 @@ class PublishModuleCommand extends Command
 
     protected $description = 'Publish module config/assets into the host (install/update path)';
 
+    /** Publish the given package's files; returns failure on handled Modulus errors. */
     public function handle(): int
     {
         $package = (string) $this->argument('package');

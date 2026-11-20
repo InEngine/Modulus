@@ -94,6 +94,7 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         return $dependents;
     }
 
+    /** Whether a package is a Modulus module (tracked, denied, or ships a {@see ModuleServiceProvider}). */
     public function isModulusModule(string $package): bool
     {
         if (in_array($package, $this->deny, true)) {
@@ -113,6 +114,7 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         return false;
     }
 
+    /** Whether a package counts as enabled; denied packages are always treated as enabled. */
     protected function isEffectivelyEnabled(string $package): bool
     {
         if (in_array($package, $this->deny, true)) {

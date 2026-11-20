@@ -42,8 +42,20 @@ use InEngine\Modulus\Upgrades\UpgradeConstraintPolicy;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
+/**
+ * Package service provider for InEngine Modulus.
+ *
+ * Registers config, views, Artisan commands, and container bindings (state store,
+ * discovery syncer, migrator, publisher, seeder, lifecycle, dependency guard,
+ * {@see ModuleRepository}, upgrade policy, update checker/notifier, and doctor).
+ */
 class ModulusServiceProvider extends PackageServiceProvider
 {
+    /**
+     * Declare the package name, config file, views, and Artisan commands.
+     *
+     * @param  Package  $package  Spatie package-tools builder.
+     */
     public function configurePackage(Package $package): void
     {
         /*

@@ -27,6 +27,7 @@ final readonly class AvailableModuleUpdate
         public ?string $rootConstraint = null,
     ) {}
 
+    /** Whether the bump is a patch (same major/minor). */
     public function isNonBreaking(): bool
     {
         return $this->bump === self::BUMP_PATCH;

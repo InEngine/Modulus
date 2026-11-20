@@ -19,6 +19,7 @@ final readonly class DoctorReport
         public string $defaultConstraintPolicy,
     ) {}
 
+    /** Whether any finding is an error (see {@see DoctorFinding::isError()}). */
     public function hasErrors(): bool
     {
         foreach ($this->findings as $finding) {

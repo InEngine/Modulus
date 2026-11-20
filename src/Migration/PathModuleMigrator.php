@@ -72,6 +72,7 @@ final class PathModuleMigrator implements ModuleMigrator
         $this->resolveMigrator()->run([$path]);
     }
 
+    /** Return the Migrator, invoking the lazy closure when one was supplied. */
     protected function resolveMigrator(): Migrator
     {
         if ($this->migrator instanceof Closure) {

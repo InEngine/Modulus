@@ -23,41 +23,49 @@ final class ResolvingModuleLifecycleRunner implements ModuleLifecycleRunner
         protected InstalledPackageLocator $packages,
     ) {}
 
+    /** {@inheritdoc} */
     public function activating(string $package): void
     {
         $this->invoke($package, 'activating');
     }
 
+    /** {@inheritdoc} */
     public function activated(string $package): void
     {
         $this->invoke($package, 'activated');
     }
 
+    /** {@inheritdoc} */
     public function deactivating(string $package): void
     {
         $this->invoke($package, 'deactivating');
     }
 
+    /** {@inheritdoc} */
     public function deactivated(string $package): void
     {
         $this->invoke($package, 'deactivated');
     }
 
+    /** {@inheritdoc} */
     public function uninstalling(string $package): void
     {
         $this->invoke($package, 'uninstalling');
     }
 
+    /** {@inheritdoc} */
     public function uninstalled(string $package): void
     {
         $this->invoke($package, 'uninstalled');
     }
 
+    /** {@inheritdoc} */
     public function upgrading(string $package): void
     {
         $this->invoke($package, 'upgrading');
     }
 
+    /** {@inheritdoc} */
     public function upgraded(string $package): void
     {
         $this->invoke($package, 'upgraded');
