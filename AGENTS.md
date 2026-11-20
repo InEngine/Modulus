@@ -67,3 +67,7 @@ Prefer `Modulus` facade / `ModuleRepository` over the state store or discovery s
 - Pest, PHPStan, Pint. PHPDoc over inline comments.
 
 </laravel-boost-guidelines>
+
+## Git
+
+- Work on **`dev`**; open a PR into **`main`**. See InEngine Documentation `Git workflow.md`.
