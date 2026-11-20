@@ -1,9 +1,19 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Publish\PathModulePublisher} publishing config and assets from a package install path.
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Publish\PathModulePublisher;
 
+/**
+ * Create a temp package root with `config/alert.php` and `resources/dist/app.js`
+ * for {@see PathModulePublisher} tests.
+ *
+ * @return string Absolute path to the temp package root.
+ */
 function publisherPackageRoot(): string
 {
     $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-pub-'.uniqid('', true);

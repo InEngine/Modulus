@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\ModuleRepository} state transitions, lifecycle hooks, guards, and events.
+ */
+
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +33,15 @@ use InEngine\Modulus\State\FileModulusStateStore;
 use Mockery\MockInterface;
 
 /**
+ * Build a {@see ModuleRepository} over a temp {@see FileModulusStateStore} with Mockery doubles.
+ *
+ * Any collaborator not passed in is replaced with a permissive mock. Pair with
+ * `moduleRepositoryCleanup()`.
+ *
+ * @param  list<string>  $deny  Package names Modulus must not manage.
+ * @param  InstalledPackageLocator|null  $installedPackages  Custom locator, or a default "installed" mock.
+ * @param  ModuleDependencyGuard|null  $dependencies  Custom guard, or a no-op mock.
+ * @param  Dispatcher|null  $events  Custom dispatcher, or a mock that accepts `dispatch()`.
  * @return array{
  *     0: string,
  *     1: string,
@@ -41,7 +54,7 @@ use Mockery\MockInterface;
  *     8: MockInterface&ModuleLifecycleRunner,
  *     9: MockInterface&ModuleDependencyGuard,
  *     10: MockInterface&Dispatcher
- * }
+ * } Temp directory, state path, repository, then each collaborator.
  */
 function moduleRepositoryFixture(
     array $deny = ['inengine/modulus'],
@@ -104,6 +117,12 @@ function moduleRepositoryFixture(
     ];
 }
 
+/**
+ * Remove the temp state file and directory created by `moduleRepositoryFixture()`.
+ *
+ * @param  string  $directory  Temp directory returned by the fixture.
+ * @param  string  $path  State file path returned by the fixture.
+ */
 function moduleRepositoryCleanup(string $directory, string $path): void
 {
     if (is_file($path)) {

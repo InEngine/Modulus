@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Dependencies\ComposerModuleDependencyGuard} enable/disable dependency checks.
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Dependencies\ComposerModuleDependencyGuard;
@@ -9,7 +13,13 @@ use InEngine\Modulus\State\FileModulusStateStore;
 use Mockery\MockInterface;
 
 /**
+ * Build a {@see ComposerModuleDependencyGuard} over a temp {@see FileModulusStateStore} and a mocked locator.
+ *
+ * The locator defaults to "installed" with no requires, providers, or version info; the guard
+ * denies `inengine/modulus` from being managed. Pair with `dependencyGuardCleanup()`.
+ *
  * @return array{0: string, 1: string, 2: FileModulusStateStore, 3: ComposerModuleDependencyGuard, 4: InstalledPackageLocator&MockInterface}
+ *                                                                                                 Temp directory, state file path, store, guard, locator mock.
  */
 function dependencyGuardFixture(): array
 {
@@ -30,6 +40,12 @@ function dependencyGuardFixture(): array
     return [$directory, $path, $store, $guard, $locator];
 }
 
+/**
+ * Remove the temp state file and directory created by `dependencyGuardFixture()`.
+ *
+ * @param  string  $directory  Temp directory returned by the fixture.
+ * @param  string  $path  State file path returned by the fixture.
+ */
 function dependencyGuardCleanup(string $directory, string $path): void
 {
     if (is_file($path)) {

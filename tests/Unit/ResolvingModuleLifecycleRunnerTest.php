@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Lifecycle\ResolvingModuleLifecycleRunner} lifecycle hook dispatch to module providers.
+ */
+
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Lifecycle\ResolvingModuleLifecycleRunner;
 use InEngine\Modulus\ModuleServiceProvider;

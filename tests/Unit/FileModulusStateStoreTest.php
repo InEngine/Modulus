@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\State\FileModulusStateStore} and
+ * {@see \InEngine\Modulus\State\FileModulusStateStoreFactory} JSON persistence, atomic writes, and corruption handling.
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\CorruptModulusStateException;
@@ -8,7 +13,12 @@ use InEngine\Modulus\State\FileModulusStateStore;
 use InEngine\Modulus\State\FileModulusStateStoreFactory;
 
 /**
- * @return array{0: string, 1: string, 2: FileModulusStateStore}
+ * Build a {@see FileModulusStateStore} targeting a not-yet-created temp `modules.json`.
+ *
+ * Pair with `modulusStateStoreCleanup()`.
+ *
+ * @param  bool  $fsync  Whether the store fsyncs before rename.
+ * @return array{0: string, 1: string, 2: FileModulusStateStore} Temp directory, state path, store.
  */
 function modulusStateStoreFixture(bool $fsync = false): array
 {
@@ -18,6 +28,12 @@ function modulusStateStoreFixture(bool $fsync = false): array
     return [$directory, $path, new FileModulusStateStore($path, new Filesystem, $fsync)];
 }
 
+/**
+ * Remove the temp state file and directory created by `modulusStateStoreFixture()`.
+ *
+ * @param  string  $directory  Temp directory returned by the fixture.
+ * @param  string  $path  State file path returned by the fixture.
+ */
 function modulusStateStoreCleanup(string $directory, string $path): void
 {
     if (is_file($path)) {
@@ -36,7 +52,11 @@ function modulusStateStoreCleanup(string $directory, string $path): void
 }
 
 /**
- * @param  array<string, array{enabled: bool, version: string|null}>  $state
+ * Write raw state JSON to disk, creating the directory when needed.
+ *
+ * @param  string  $directory  Directory to create if missing.
+ * @param  string  $path  State file path to write.
+ * @param  array<string, array{enabled: bool, version: string|null}>  $state  State to encode.
  */
 function modulusStateStoreSeed(string $directory, string $path, array $state): void
 {
@@ -51,6 +71,9 @@ function modulusStateStoreSeed(string $directory, string $path, array $state): v
 }
 
 /**
+ * Read and decode the state JSON currently on disk.
+ *
+ * @param  string  $path  State file path.
  * @return array<string, array{enabled: bool, version: string|null}>
  */
 function modulusStateStoreReadDisk(string $path): array
@@ -61,6 +84,9 @@ function modulusStateStoreReadDisk(string $path): array
     return $decoded;
 }
 
+/**
+ * Pest dataset: write modes (`filesystem replace` vs `fsync`) for {@see FileModulusStateStore}.
+ */
 dataset('modulus_write_modes', [
     'filesystem replace' => [false],
     'fsync' => [true],

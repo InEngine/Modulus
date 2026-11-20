@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Discovery\PackageManifestInstaller} rebinding the package manifest to
+ * {@see \InEngine\Modulus\Discovery\FilteringPackageManifest} before provider registration.
+ */
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
 use Illuminate\Foundation\PackageManifest;
@@ -9,6 +14,13 @@ use InEngine\Modulus\Discovery\PackageManifestInstaller;
 use InEngine\Modulus\Exceptions\InvalidModulusStateStoreException;
 use InEngine\Modulus\State\FileModulusStateStore;
 
+/**
+ * Create a temp directory with an empty `packages.php` for {@see PackageManifestInstaller} tests.
+ *
+ * Pair with `modulusInstallerCleanup()`.
+ *
+ * @return array{0: string, 1: string, 2: string} Temp directory, state file path (not yet created), packages path.
+ */
 function modulusInstallerFixture(): array
 {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-install-'.uniqid('', true);
@@ -20,6 +32,11 @@ function modulusInstallerFixture(): array
     return [$directory, $statePath, $packagesPath];
 }
 
+/**
+ * Remove the temp directory and files created by `modulusInstallerFixture()`.
+ *
+ * @param  string  $directory  Temp directory returned by the fixture.
+ */
 function modulusInstallerCleanup(string $directory): void
 {
     foreach (glob($directory.DIRECTORY_SEPARATOR.'*') ?: [] as $file) {
@@ -28,6 +45,16 @@ function modulusInstallerCleanup(string $directory): void
     @rmdir($directory);
 }
 
+/**
+ * Install {@see PackageManifestInstaller} and resolve the rebound manifest as the framework would.
+ *
+ * Registers a stock {@see PackageManifest} singleton for the given paths, runs the installer,
+ * dispatches the `bootstrapping: RegisterProviders` event, then resolves the manifest.
+ *
+ * @param  Application  $app  Application under test.
+ * @param  string  $directory  Base path for the manifest.
+ * @param  string  $packagesPath  Path to `packages.php`.
+ */
 function modulusInstallerResolveManifest(Application $app, string $directory, string $packagesPath): FilteringPackageManifest
 {
     app()->forgetInstance(ModulusStateStore::class);

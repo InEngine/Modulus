@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Seeding\ResolvingModuleSeederRunner} seeder resolution from module providers.
+ */
+
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleSeeder;
 use InEngine\Modulus\Exceptions\ModuleSeederMissingException;

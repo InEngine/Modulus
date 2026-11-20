@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Upgrades\SemverBumpClassifier} patch/minor/major classification.
+ */
+
 use InEngine\Modulus\DataTransferObjects\AvailableModuleUpdate;
 use InEngine\Modulus\Upgrades\SemverBumpClassifier;
 

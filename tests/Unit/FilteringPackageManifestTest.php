@@ -1,11 +1,22 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Discovery\FilteringPackageManifest} filtering providers by module state.
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Discovery\FilteringPackageManifest;
 use InEngine\Modulus\State\FileModulusStateStore;
 
 /**
+ * Write a temp `packages.php` (and optional `modules.json`) and build a {@see FilteringPackageManifest}.
+ *
+ * Pair with `filteringManifestCleanup()`.
+ *
+ * @param  array<string, mixed>  $manifest  Package manifest contents written to `packages.php`.
+ * @param  array<string, array{enabled: bool, version: string|null}>  $state  Module state written to `modules.json`; omitted when empty.
  * @return array{0: string, 1: string, 2: string, 3: FileModulusStateStore, 4: FilteringPackageManifest}
+ *                                                                                    Temp directory, manifest path, state path, store, filtering manifest.
  */
 function filteringManifestFixture(array $manifest, array $state = []): array
 {
@@ -40,6 +51,11 @@ function filteringManifestFixture(array $manifest, array $state = []): array
     return [$directory, $manifestPath, $statePath, $store, $filtering];
 }
 
+/**
+ * Remove the temp directory and files created by `filteringManifestFixture()`.
+ *
+ * @param  string  $directory  Temp directory returned by the fixture.
+ */
 function filteringManifestCleanup(string $directory): void
 {
     if (! is_dir($directory)) {

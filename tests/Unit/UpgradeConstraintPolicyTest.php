@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Upgrades\UpgradeConstraintPolicy} constraint suggestions and acceptance per policy.
+ */
+
 use InEngine\Modulus\Upgrades\UpgradeConstraintPolicy;
 
 it('suggests tilde constraints for the default patch policy', function () {

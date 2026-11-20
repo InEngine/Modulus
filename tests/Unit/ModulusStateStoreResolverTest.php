@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\State\ModulusStateStoreResolver} resolving the configured
+ * {@see \InEngine\Modulus\Contracts\ModulusStateStore} implementation from `modulus.store`.
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\ModulusStateStore;
 use InEngine\Modulus\Exceptions\InvalidModulusStateStoreException;

@@ -5,8 +5,21 @@ namespace InEngine\Modulus\Tests;
 use InEngine\Modulus\ModulusServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
+/**
+ * Base Orchestra Testbench case for the Modulus package test suite.
+ *
+ * Registers {@see ModulusServiceProvider} and points Modulus state at an isolated
+ * temp JSON file per test so tests never touch a real `modules.json`.
+ * Bound to all tests via `tests/Pest.php`.
+ */
 class TestCase extends Orchestra
 {
+    /**
+     * Register package service providers with the Testbench application.
+     *
+     * @param  \Illuminate\Foundation\Application  $app
+     * @return array<int, class-string<\Illuminate\Support\ServiceProvider>>
+     */
     protected function getPackageProviders($app)
     {
         return [
@@ -14,6 +27,14 @@ class TestCase extends Orchestra
         ];
     }
 
+    /**
+     * Configure the Testbench environment before the application boots.
+     *
+     * Uses the `testing` database connection, a unique temp `modulus.state_path`
+     * with fsync disabled, and the `patch` upgrade policy with `auto_apply_installed` on.
+     *
+     * @param  \Illuminate\Foundation\Application  $app
+     */
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');

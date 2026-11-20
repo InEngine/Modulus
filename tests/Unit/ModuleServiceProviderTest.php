@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\ModuleServiceProvider} registration handshake with Modulus.
+ */
+
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleLifecycleRunner;
 use InEngine\Modulus\Contracts\ModuleMigrator;
@@ -11,6 +15,15 @@ use InEngine\Modulus\ModuleServiceProvider;
 use InEngine\Modulus\State\FileModulusStateStore;
 use Spatie\LaravelPackageTools\Package;
 
+/**
+ * Build an anonymous {@see ModuleServiceProvider} for exercising the Modulus handshake.
+ *
+ * Exposes `$bootingPackageFlag` / `$packageBootedFlag` to assert hook ordering, and overrides
+ * the package name and version reported to Modulus.
+ *
+ * @param  string  $packageName  Composer package name reported to Modulus.
+ * @param  string|null  $version  Package version reported to Modulus, if any.
+ */
 function makeHandshakeProvider(string $packageName = 'inengine/alert', ?string $version = null): ModuleServiceProvider
 {
     return new class(app(), $packageName, $version) extends ModuleServiceProvider
@@ -51,6 +64,14 @@ function makeHandshakeProvider(string $packageName = 'inengine/alert', ?string $
     };
 }
 
+/**
+ * Point Modulus at a fresh temp state file and bind a mocked {@see InstalledPackageLocator}.
+ *
+ * Forgets cached {@see ModuleRepository}, state store, and runner bindings so the next resolve
+ * uses the new path. Pair with `cleanupModulusStatePath()`.
+ *
+ * @return string Absolute path to the temp `modules.json` state file.
+ */
 function prepareModulusStatePath(): string
 {
     $path = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-handshake-'.uniqid('', true).'.json';
@@ -78,6 +99,11 @@ function prepareModulusStatePath(): string
     return $path;
 }
 
+/**
+ * Delete the temp state file created by `prepareModulusStatePath()`.
+ *
+ * @param  string  $path  State file path returned by `prepareModulusStatePath()`.
+ */
 function cleanupModulusStatePath(string $path): void
 {
     if (is_file($path)) {

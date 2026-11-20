@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Migration\PathModuleMigrator} running migrations from a package install path.
+ */
+
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;

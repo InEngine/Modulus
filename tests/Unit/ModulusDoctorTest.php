@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Unit coverage for {@see \InEngine\Modulus\Diagnostics\ModulusDoctor} findings (missing packages, constraint policy, updates, dependencies).
+ */
+
 use Illuminate\Filesystem\Filesystem;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
