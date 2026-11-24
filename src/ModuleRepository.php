@@ -487,7 +487,7 @@ class ModuleRepository
     }
 
     /**
-     * Disable a tracked package. Denied packages cannot be disabled.
+     * Disable a tracked package. Denied and library packages cannot be disabled.
      *
      * Non-destructive: leaves DB tables and module storage intact.
      * Order: deactivating → state → discovery sync → deactivated.
@@ -501,6 +501,12 @@ class ModuleRepository
         if ($this->isDenied($package)) {
             throw new \InvalidArgumentException(
                 "Package [{$package}] is on the Modulus discovery deny list and cannot be disabled."
+            );
+        }
+
+        if ($this->isLibraryPackage($package)) {
+            throw new \InvalidArgumentException(
+                "Package [{$package}] is a library module and cannot be disabled."
             );
         }
 
@@ -532,6 +538,12 @@ class ModuleRepository
         if ($this->isDenied($package)) {
             throw new \InvalidArgumentException(
                 "Package [{$package}] is on the Modulus discovery deny list and cannot be forgotten."
+            );
+        }
+
+        if ($this->isLibraryPackage($package)) {
+            throw new \InvalidArgumentException(
+                "Package [{$package}] is a library module and cannot be forgotten while installed."
             );
         }
 
@@ -572,6 +584,28 @@ class ModuleRepository
     public function isDenied(string $package): bool
     {
         return in_array($package, $this->deny, true);
+    }
+
+    /**
+     * Whether a tracked package is a library module (ports/tokens).
+     *
+     * Libraries stay enabled and discoverable like deny-list packages (e.g. Modulus core).
+     */
+    public function isLibraryPackage(string $package): bool
+    {
+        $entry = $this->store->get($package);
+
+        if ($entry !== null && ($entry['capabilities']['kind'] ?? null) === ModuleCapabilities::KIND_LIBRARY) {
+            return true;
+        }
+
+        $located = $this->capabilityLocator->locate($package);
+
+        if ($located === null) {
+            return false;
+        }
+
+        return ModuleCapabilities::normalize($located)['kind'] === ModuleCapabilities::KIND_LIBRARY;
     }
 
     /** Dispatch {@see ModuleRegistered} for the package's current state. */

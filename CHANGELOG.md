@@ -7,7 +7,7 @@ All notable changes to `Modulus` will be documented in this file.
 ### Added
 
 - `ModuleExtensionGate` for companion macros / `resolveRelationUsing` (tokens, packages, configKeys + `whenReady()`)
-- Library module kind (`kind: library`): default-enabled on register; dependency guard treats installed libraries as satisfied; `enable()` promotes Composer-required libraries; re-register heals stale disabled library state
+- Library module kind (`kind: library`): default-enabled on register; dependency guard treats installed libraries as satisfied; `enable()` promotes Composer-required libraries; re-register heals stale disabled library state; cannot disable/forget; stay in package discovery like Modulus core (deny list)
 - Step 14 Capability Registry (in-core): persist descriptor metadata on state; `CapabilityRegistry` query API; `modulus:capabilities` Artisan; `ModuleCapabilityLocator` for disabled modules
 
 ## 0.1.0-beta.2 - 2026-11-20

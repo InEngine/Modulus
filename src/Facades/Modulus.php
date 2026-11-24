@@ -23,6 +23,7 @@ use InEngine\Modulus\ModuleRepository;
  * @method static void uninstall(string $package)
  * @method static void validateTrackedPackages()
  * @method static bool isDenied(string $package)
+ * @method static bool isLibraryPackage(string $package)
  *
  * @see ModuleRepository
  */

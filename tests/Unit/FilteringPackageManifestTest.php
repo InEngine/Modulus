@@ -158,6 +158,33 @@ it('never omits inengine/modulus even when state says disabled', function () {
     }
 });
 
+it('never omits library modules even when state says disabled', function () {
+    [$directory, , , , $manifest] = filteringManifestFixture(
+        [
+            'inengine/identity-contracts' => [
+                'providers' => ['InEngine\\IdentityContracts\\IdentityContractsServiceProvider'],
+            ],
+        ],
+        [
+            'inengine/identity-contracts' => [
+                'enabled' => false,
+                'version' => '1.0.0',
+                'capabilities' => [
+                    'kind' => 'library',
+                    'provides' => ['identity.contracts'],
+                ],
+            ],
+        ],
+    );
+
+    try {
+        expect($manifest->shouldOmit('inengine/identity-contracts'))->toBeFalse()
+            ->and($manifest->providers())->toContain('InEngine\\IdentityContracts\\IdentityContractsServiceProvider');
+    } finally {
+        filteringManifestCleanup($directory);
+    }
+});
+
 it('also filters aliases for disabled tracked packages', function () {
     [$directory, , , , $manifest] = filteringManifestFixture(
         [

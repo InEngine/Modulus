@@ -208,6 +208,41 @@ it('refuses to disable packages on the deny list', function () {
     }
 });
 
+it('refuses to disable library modules', function () {
+    [$directory, $path, $repo] = moduleRepositoryFixture();
+
+    try {
+        $repo->register('inengine/identity-contracts', '1.0.0', [
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ]);
+
+        expect($repo->isLibraryPackage('inengine/identity-contracts'))->toBeTrue()
+            ->and(fn () => $repo->disable('inengine/identity-contracts'))
+            ->toThrow(InvalidArgumentException::class, 'library module')
+            ->and($repo->isEnabled('inengine/identity-contracts'))->toBeTrue();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('refuses to forget library modules', function () {
+    [$directory, $path, $repo] = moduleRepositoryFixture();
+
+    try {
+        $repo->register('inengine/identity-contracts', '1.0.0', [
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ]);
+
+        expect(fn () => $repo->forget('inengine/identity-contracts'))
+            ->toThrow(InvalidArgumentException::class, 'library module')
+            ->and($repo->get('inengine/identity-contracts'))->not->toBeNull();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
 it('registers denied packages as enabled', function () {
     [$directory, $path, $repo, $syncer] = moduleRepositoryFixture();
     $syncer->shouldReceive('sync')->once();

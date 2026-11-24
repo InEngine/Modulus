@@ -89,12 +89,19 @@ class FilteringPackageManifest extends PackageManifest
             return false;
         }
 
-        // Both scopes omit only packages present in state with enabled=false.
+        $entry = $this->stateStore->get($package);
+
         // Untracked packages always pass through until discover registers them.
-        if ($this->stateStore->get($package) === null) {
+        if ($entry === null) {
             return false;
         }
 
+        // Library modules (ports/tokens) stay discoverable like deny-list packages.
+        if (($entry['capabilities']['kind'] ?? null) === 'library') {
+            return false;
+        }
+
+        // Both scopes omit only packages present in state with enabled=false.
         return ! $this->stateStore->isEnabled($package);
     }
 }
