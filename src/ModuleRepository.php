@@ -175,8 +175,12 @@ class ModuleRepository
         $existing = $this->store->get($package);
 
         if ($existing === null) {
+            $isLibrary = $normalizedCapabilities !== null
+                && $normalizedCapabilities['kind'] === ModuleCapabilities::KIND_LIBRARY;
+
+            // Deny-list and library modules default to enabled (ports always available).
             $entry = [
-                'enabled' => $this->isDenied($package),
+                'enabled' => $this->isDenied($package) || $isLibrary,
                 'version' => $version,
             ];
 

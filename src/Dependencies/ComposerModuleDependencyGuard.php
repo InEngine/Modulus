@@ -2,6 +2,7 @@
 
 namespace InEngine\Modulus\Dependencies;
 
+use InEngine\Modulus\Capabilities\ModuleCapabilities;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModulusStateStore;
@@ -43,6 +44,12 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
             }
 
             if (! $this->isModulusModule($dependency)) {
+                continue;
+            }
+
+            // Library modules (ports/tokens) satisfy enable deps when installed;
+            // they default to enabled on register and always boot when present.
+            if ($this->isLibraryModule($dependency)) {
                 continue;
             }
 
@@ -122,5 +129,21 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         }
 
         return $this->store->isEnabled($package);
+    }
+
+    /**
+     * Library kind from persisted capabilities, or false when untracked / feature.
+     */
+    protected function isLibraryModule(string $package): bool
+    {
+        $state = $this->store->get($package);
+
+        if ($state === null || ! array_key_exists('capabilities', $state)) {
+            return false;
+        }
+
+        $capabilities = ModuleCapabilities::normalize($state['capabilities']);
+
+        return $capabilities['kind'] === ModuleCapabilities::KIND_LIBRARY;
     }
 }
