@@ -493,6 +493,8 @@ it('resolves the repository from the container and facade', function () {
         $locator->shouldReceive('isInstalled')->andReturn(true);
         $locator->shouldReceive('installPath')->andReturn(null)->byDefault();
         $locator->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+        $locator->shouldReceive('composerRequires')->andReturn([])->byDefault();
+        $locator->shouldReceive('version')->andReturn(null)->byDefault();
         app()->instance(InstalledPackageLocator::class, $locator);
 
         $migrator = Mockery::mock(ModuleMigrator::class);

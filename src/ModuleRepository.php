@@ -200,6 +200,18 @@ class ModuleRepository
             && ! ModuleCapabilities::equals($existing['capabilities'] ?? null, $normalizedCapabilities);
 
         if (! $versionChanged && ! $capabilitiesChanged) {
+            // Heal: library modules must stay enabled even if registered before kind existed.
+            if (
+                $normalizedCapabilities !== null
+                && $normalizedCapabilities['kind'] === ModuleCapabilities::KIND_LIBRARY
+                && $existing['enabled'] !== true
+            ) {
+                $existing['capabilities'] = $normalizedCapabilities;
+                $existing['enabled'] = true;
+                $this->store->put($package, $existing);
+                $this->discovery->sync();
+            }
+
             return;
         }
 
@@ -210,6 +222,10 @@ class ModuleRepository
 
             if ($normalizedCapabilities !== null) {
                 $existing['capabilities'] = $normalizedCapabilities;
+
+                if ($normalizedCapabilities['kind'] === ModuleCapabilities::KIND_LIBRARY) {
+                    $existing['enabled'] = true;
+                }
             }
 
             $this->store->put($package, $existing);
@@ -234,7 +250,13 @@ class ModuleRepository
         }
 
         $existing['capabilities'] = $normalizedCapabilities;
+
+        if ($normalizedCapabilities['kind'] === ModuleCapabilities::KIND_LIBRARY) {
+            $existing['enabled'] = true;
+        }
+
         $this->store->put($package, $existing);
+        $this->discovery->sync();
     }
 
     /**
@@ -405,6 +427,9 @@ class ModuleRepository
 
             return;
         }
+
+        // Promote Composer-required library modules (ports/tokens) before the enable gate.
+        $this->ensureComposerLibraryDependenciesReady($package);
 
         $this->dependencies->assertCanEnable($package);
         $this->lifecycle->activating($package);
@@ -584,6 +609,45 @@ class ModuleRepository
             $items,
             $this->store->get($package)['version'] ?? null,
         ));
+    }
+
+    /**
+     * Register + enable Composer-required library modules so feature enable is not blocked
+     * by stale disabled state (e.g. contracts registered before kind: library).
+     */
+    protected function ensureComposerLibraryDependenciesReady(string $package): void
+    {
+        foreach ($this->installedPackages->composerRequires($package) as $dependency) {
+            if (! $this->installedPackages->isInstalled($dependency)) {
+                continue;
+            }
+
+            if (! $this->looksLikeModulusModule($dependency)) {
+                continue;
+            }
+
+            $capabilities = $this->capabilityLocator->locate($dependency);
+
+            if ($capabilities === null) {
+                continue;
+            }
+
+            $normalized = ModuleCapabilities::normalize($capabilities);
+
+            if ($normalized['kind'] !== ModuleCapabilities::KIND_LIBRARY) {
+                continue;
+            }
+
+            $this->register(
+                $dependency,
+                $this->installedPackages->version($dependency),
+                $capabilities,
+            );
+
+            if (! $this->store->isEnabled($dependency)) {
+                $this->store->setEnabled($dependency, true);
+            }
+        }
     }
 
     /** Whether a package is tracked, denied, or ships a {@see ModuleServiceProvider}. */

@@ -36,6 +36,7 @@ use InEngine\Modulus\Migration\PathModuleMigrator;
 use InEngine\Modulus\Publish\PathModulePublisher;
 use InEngine\Modulus\Seeding\ResolvingModuleSeederRunner;
 use InEngine\Modulus\State\ModulusStateStoreResolver;
+use InEngine\Modulus\Support\ModuleExtensionGate;
 use InEngine\Modulus\Updates\ArrayModuleUpdateChecker;
 use InEngine\Modulus\Updates\ComposerOutdatedUpdateChecker;
 use InEngine\Modulus\Updates\ModuleUpdateNotifier;
@@ -134,12 +135,15 @@ class ModulusServiceProvider extends PackageServiceProvider
                 $app->make(ModulusStateStore::class),
                 $app->make(InstalledPackageLocator::class),
                 $denyList,
+                $app->make(ModuleCapabilityLocator::class),
             );
         });
 
         $this->app->singleton(ModuleCapabilityLocator::class);
 
         $this->app->singleton(CapabilityRegistry::class);
+
+        $this->app->singleton(ModuleExtensionGate::class);
 
         $this->app->singleton(ModuleRepository::class, function ($app): ModuleRepository {
             return ModuleRepository::fromConfig(

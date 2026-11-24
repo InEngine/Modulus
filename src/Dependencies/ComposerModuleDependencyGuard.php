@@ -3,6 +3,7 @@
 namespace InEngine\Modulus\Dependencies;
 
 use InEngine\Modulus\Capabilities\ModuleCapabilities;
+use InEngine\Modulus\Capabilities\ModuleCapabilityLocator;
 use InEngine\Modulus\Contracts\InstalledPackageLocator;
 use InEngine\Modulus\Contracts\ModuleDependencyGuard;
 use InEngine\Modulus\Contracts\ModulusStateStore;
@@ -16,6 +17,9 @@ use InEngine\Modulus\ModuleServiceProvider;
  * Classification: a package is a Modulus module when it is tracked in state,
  * on the discovery deny list, or ships a ModuleServiceProvider. Everything
  * else is a plain Composer dependency (installed-only on enable).
+ *
+ * Library modules (kind: library) satisfy enable deps when installed — they
+ * need not be toggled on (and are auto-enabled on register / enable of dependents).
  */
 final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
 {
@@ -26,6 +30,7 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         protected ModulusStateStore $store,
         protected InstalledPackageLocator $installedPackages,
         protected array $deny = ['inengine/modulus'],
+        protected ?ModuleCapabilityLocator $capabilityLocator = null,
     ) {}
 
     /**
@@ -47,8 +52,6 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
                 continue;
             }
 
-            // Library modules (ports/tokens) satisfy enable deps when installed;
-            // they default to enabled on register and always boot when present.
             if ($this->isLibraryModule($dependency)) {
                 continue;
             }
@@ -121,6 +124,36 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         return false;
     }
 
+    /**
+     * Whether this dependency is a library module (ports/tokens).
+     *
+     * Prefers persisted capabilities, then live descriptor via {@see ModuleCapabilityLocator}.
+     */
+    public function isLibraryModule(string $package): bool
+    {
+        $state = $this->store->get($package);
+
+        if ($state !== null && array_key_exists('capabilities', $state)) {
+            $capabilities = ModuleCapabilities::normalize($state['capabilities']);
+
+            if ($capabilities['kind'] === ModuleCapabilities::KIND_LIBRARY) {
+                return true;
+            }
+        }
+
+        if ($this->capabilityLocator === null) {
+            return false;
+        }
+
+        $located = $this->capabilityLocator->locate($package);
+
+        if ($located === null) {
+            return false;
+        }
+
+        return ModuleCapabilities::normalize($located)['kind'] === ModuleCapabilities::KIND_LIBRARY;
+    }
+
     /** Whether a package counts as enabled; denied packages are always treated as enabled. */
     protected function isEffectivelyEnabled(string $package): bool
     {
@@ -129,21 +162,5 @@ final class ComposerModuleDependencyGuard implements ModuleDependencyGuard
         }
 
         return $this->store->isEnabled($package);
-    }
-
-    /**
-     * Library kind from persisted capabilities, or false when untracked / feature.
-     */
-    protected function isLibraryModule(string $package): bool
-    {
-        $state = $this->store->get($package);
-
-        if ($state === null || ! array_key_exists('capabilities', $state)) {
-            return false;
-        }
-
-        $capabilities = ModuleCapabilities::normalize($state['capabilities']);
-
-        return $capabilities['kind'] === ModuleCapabilities::KIND_LIBRARY;
     }
 }

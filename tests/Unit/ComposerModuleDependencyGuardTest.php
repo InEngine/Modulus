@@ -111,6 +111,30 @@ it('allows enable when Modulus deps are enabled and non-Modulus deps are install
     }
 });
 
+it('allows enable when a required library module is installed but disabled in state', function () {
+    [$directory, $path, $store, $guard, $locator] = dependencyGuardFixture();
+
+    $store->put('inengine/identity-contracts', [
+        'enabled' => false,
+        'version' => '1.0.0',
+        'capabilities' => [
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ],
+    ]);
+    $locator->shouldReceive('composerRequires')
+        ->with('inengine/user')
+        ->andReturn(['inengine/identity-contracts']);
+    $locator->shouldReceive('isInstalled')->with('inengine/identity-contracts')->andReturn(true);
+
+    try {
+        $guard->assertCanEnable('inengine/user');
+        expect($guard->isLibraryModule('inengine/identity-contracts'))->toBeTrue();
+    } finally {
+        dependencyGuardCleanup($directory, $path);
+    }
+});
+
 it('treats deny-list packages as always-enabled Modulus modules', function () {
     [$directory, $path, , $guard, $locator] = dependencyGuardFixture();
 
