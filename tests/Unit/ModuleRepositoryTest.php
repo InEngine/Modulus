@@ -43,6 +43,7 @@ use Mockery\MockInterface;
  * @param  InstalledPackageLocator|null  $installedPackages  Custom locator, or a default "installed" mock.
  * @param  ModuleDependencyGuard|null  $dependencies  Custom guard, or a no-op mock.
  * @param  Dispatcher|null  $events  Custom dispatcher, or a mock that accepts `dispatch()`.
+ * @param  ModuleCapabilityLocator|null  $capabilityLocator  Custom locator, or a default mock.
  * @return array{
  *     0: string,
  *     1: string,
@@ -54,7 +55,8 @@ use Mockery\MockInterface;
  *     7: MockInterface&ModuleSeederRunner,
  *     8: MockInterface&ModuleLifecycleRunner,
  *     9: MockInterface&ModuleDependencyGuard,
- *     10: MockInterface&Dispatcher
+ *     10: MockInterface&Dispatcher,
+ *     11: MockInterface&ModuleCapabilityLocator
  * } Temp directory, state path, repository, then each collaborator.
  */
 function moduleRepositoryFixture(
@@ -62,6 +64,7 @@ function moduleRepositoryFixture(
     ?InstalledPackageLocator $installedPackages = null,
     ?ModuleDependencyGuard $dependencies = null,
     ?Dispatcher $events = null,
+    ?ModuleCapabilityLocator $capabilityLocator = null,
 ): array {
     $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-repo-'.uniqid('', true);
     $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
@@ -103,8 +106,10 @@ function moduleRepositoryFixture(
         $events->shouldReceive('dispatch')->byDefault();
     }
 
-    $capabilityLocator = Mockery::mock(ModuleCapabilityLocator::class);
-    $capabilityLocator->shouldReceive('locate')->andReturn(null)->byDefault();
+    if ($capabilityLocator === null) {
+        $capabilityLocator = Mockery::mock(ModuleCapabilityLocator::class);
+        $capabilityLocator->shouldReceive('locate')->andReturn(null)->byDefault();
+    }
 
     return [
         $directory,
@@ -118,6 +123,7 @@ function moduleRepositoryFixture(
         $lifecycle,
         $dependencies,
         $events,
+        $capabilityLocator,
     ];
 }
 
@@ -211,6 +217,87 @@ it('registers denied packages as enabled', function () {
 
         expect($repo->isEnabled('inengine/modulus'))->toBeTrue()
             ->and($repo->get('inengine/modulus')['enabled'])->toBeTrue();
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('registers library modules as enabled by default', function () {
+    [$directory, $path, $repo] = moduleRepositoryFixture();
+
+    try {
+        $repo->register('inengine/identity-contracts', '1.0.0', [
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ]);
+
+        expect($repo->isEnabled('inengine/identity-contracts'))->toBeTrue()
+            ->and($repo->get('inengine/identity-contracts')['capabilities']['kind'] ?? null)->toBe('library');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('heals disabled library modules to enabled on re-register', function () {
+    [$directory, $path, $repo] = moduleRepositoryFixture();
+
+    try {
+        $repo->register('inengine/identity-contracts', '1.0.0');
+        expect($repo->isEnabled('inengine/identity-contracts'))->toBeFalse();
+
+        $repo->register('inengine/identity-contracts', '1.0.0', [
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ]);
+
+        expect($repo->isEnabled('inengine/identity-contracts'))->toBeTrue()
+            ->and($repo->get('inengine/identity-contracts')['capabilities']['kind'] ?? null)->toBe('library');
+    } finally {
+        moduleRepositoryCleanup($directory, $path);
+    }
+});
+
+it('promotes Composer-required library deps before enabling a feature module', function () {
+    $installedPackages = Mockery::mock(InstalledPackageLocator::class);
+    $installedPackages->shouldReceive('isInstalled')->andReturn(true)->byDefault();
+    $installedPackages->shouldReceive('installPath')->andReturn(null)->byDefault();
+    $installedPackages->shouldReceive('laravelProviderClasses')->andReturn([])->byDefault();
+    $installedPackages->shouldReceive('installedPackageNames')->andReturn([])->byDefault();
+    $installedPackages->shouldReceive('version')->andReturn('1.0.0')->byDefault();
+    $installedPackages->shouldReceive('rootConstraint')->andReturn(null)->byDefault();
+    $installedPackages->shouldReceive('composerRequires')
+        ->with('inengine/user')
+        ->andReturn(['inengine/identity-contracts']);
+
+    $capabilityLocator = Mockery::mock(ModuleCapabilityLocator::class);
+    $capabilityLocator->shouldReceive('locate')
+        ->with('inengine/identity-contracts')
+        ->andReturn([
+            'kind' => 'library',
+            'provides' => ['identity.contracts'],
+        ]);
+    $capabilityLocator->shouldReceive('locate')->andReturn(null)->byDefault();
+
+    [$directory, $path, $repo, $syncer, , $migrator, , , $lifecycle] = moduleRepositoryFixture(
+        installedPackages: $installedPackages,
+        capabilityLocator: $capabilityLocator,
+    );
+
+    $lifecycle->shouldReceive('activating')->once()->with('inengine/user');
+    $lifecycle->shouldReceive('activated')->once()->with('inengine/user');
+    $migrator->shouldReceive('migrate')->once()->with('inengine/user');
+    $syncer->shouldReceive('sync')->atLeast()->once();
+
+    try {
+        $repo->register('inengine/identity-contracts', '1.0.0');
+        expect($repo->isEnabled('inengine/identity-contracts'))->toBeFalse();
+
+        $repo->register('inengine/user', '1.0.0');
+        $repo->enable('inengine/user');
+
+        expect($repo->isEnabled('inengine/user'))->toBeTrue()
+            ->and($repo->isEnabled('inengine/identity-contracts'))->toBeTrue()
+            ->and($repo->get('inengine/identity-contracts')['capabilities']['kind'] ?? null)->toBe('library');
     } finally {
         moduleRepositoryCleanup($directory, $path);
     }
