@@ -15,11 +15,16 @@ namespace InEngine\Modulus\Capabilities;
  *     drivers: DriverMap,
  *     binds: CapabilityList,
  *     label: string|null,
- *     description: string|null
+ *     description: string|null,
+ *     kind: string
  * }
  */
 final class ModuleCapabilities
 {
+    public const KIND_FEATURE = 'feature';
+
+    public const KIND_LIBRARY = 'library';
+
     /**
      * Empty capability blob.
      *
@@ -36,6 +41,7 @@ final class ModuleCapabilities
             'binds' => [],
             'label' => null,
             'description' => null,
+            'kind' => self::KIND_FEATURE,
         ];
     }
 
@@ -61,6 +67,9 @@ final class ModuleCapabilities
 
         $description = $payload['description'] ?? null;
         $base['description'] = is_string($description) && $description !== '' ? $description : null;
+
+        $kind = $payload['kind'] ?? self::KIND_FEATURE;
+        $base['kind'] = is_string($kind) && $kind !== '' ? $kind : self::KIND_FEATURE;
 
         // Derive drivers from provides tokens using family:name convention when drivers map omitted entries.
         foreach ($base['provides'] as $token) {

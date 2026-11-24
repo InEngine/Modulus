@@ -11,6 +11,8 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 /**
  * Base provider for Modulus-compatible feature modules (defense-in-depth handshake).
  *
+ * @phpstan-import-type ModuleCapabilitiesShape from ModuleCapabilities
+ *
  * Flow when Modulus is present:
  * 1. {@see register()} / Spatie config registration always runs (provider was loaded).
  * 2. {@see packageRegistered()} registers the Composer package with {@see ModuleRepository}
@@ -132,13 +134,31 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
     }
 
     /**
+     * Module kind for Modulus / Capability Registry (`feature` or `library`).
+     *
+     * Library modules (ports/tokens) always boot when installed; they still register
+     * with Modulus and appear in the registry. Override to return
+     * {@see ModuleCapabilities::KIND_LIBRARY}.
+     */
+    protected function modulusModuleKind(): string
+    {
+        return ModuleCapabilities::KIND_FEATURE;
+    }
+
+    /**
      * Whether this module should run package boot logic.
      *
-     * Standalone (no Modulus): always true. With Modulus: only when enabled.
+     * Standalone (no Modulus): always true.
+     * Library modules: always true when installed (Composer-required ports).
+     * Feature modules: only when Modulus reports enabled.
      */
     public function shouldBootModule(): bool
     {
         if (! $this->modulusIsPresent()) {
+            return true;
+        }
+
+        if ($this->modulusModuleKind() === ModuleCapabilities::KIND_LIBRARY) {
             return true;
         }
 
@@ -179,16 +199,7 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
     /**
      * Capability payload persisted on register / discover (readable when disabled via locator).
      *
-     * @return array{
-     *     provides: list<string>,
-     *     requires: list<string>,
-     *     events: list<string>,
-     *     peers: list<string>,
-     *     drivers: array<string, list<string>>,
-     *     binds: list<string>,
-     *     label: string|null,
-     *     description: string|null
-     * }
+     * @return ModuleCapabilitiesShape
      */
     public function modulusCapabilities(): array
     {
@@ -196,11 +207,14 @@ abstract class ModuleServiceProvider extends PackageServiceProvider implements M
             ?? $this->conventionalCapabilityDescriptorClass();
 
         if ($class === null || ! class_exists($class) || ! method_exists($class, 'toArray')) {
-            return ModuleCapabilities::empty();
+            return ModuleCapabilities::normalize([
+                'kind' => $this->modulusModuleKind(),
+            ]);
         }
 
         /** @var array<string, mixed> $payload */
         $payload = $class::toArray();
+        $payload['kind'] = $payload['kind'] ?? $this->modulusModuleKind();
 
         return ModuleCapabilities::normalize($payload);
     }

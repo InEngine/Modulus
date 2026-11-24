@@ -21,8 +21,50 @@ it('normalizes descriptor payloads and derives drivers from family:name tokens',
         ->and($normalized['requires'])->toBe(['identity.demographics'])
         ->and($normalized['peers'])->toBe(['inengine/person'])
         ->and($normalized['label'])->toBe('Alert')
+        ->and($normalized['kind'])->toBe('feature')
         ->and($normalized['drivers']['person.user.driver'])->toBe(['google'])
         ->and($normalized['drivers']['auth.method'])->toBe(['local']);
+});
+
+it('normalizes library kind when provided', function () {
+    $normalized = ModuleCapabilities::normalize([
+        'kind' => ModuleCapabilities::KIND_LIBRARY,
+        'provides' => ['identity.contracts'],
+    ]);
+
+    expect($normalized['kind'])->toBe('library')
+        ->and($normalized['provides'])->toBe(['identity.contracts']);
+});
+
+it('treats library modules as providers even when not enabled', function () {
+    $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'modulus-lib-'.uniqid('', true);
+    $path = $directory.DIRECTORY_SEPARATOR.'modules.json';
+    mkdir($directory, 0755, true);
+
+    $store = new FileModulusStateStore($path, new Filesystem, false);
+    $store->put('inengine/identity-contracts', [
+        'enabled' => false,
+        'version' => '1.0.0',
+        'capabilities' => ModuleCapabilities::normalize([
+            'kind' => ModuleCapabilities::KIND_LIBRARY,
+            'provides' => ['identity.contracts'],
+        ]),
+    ]);
+
+    $registry = new CapabilityRegistry($store);
+
+    expect($registry->hasProvider('identity.contracts', enabledOnly: true))->toBeTrue()
+        ->and($registry->missingRequirements('inengine/user'))->toBe([]);
+
+    $store->put('inengine/user', [
+        'enabled' => true,
+        'version' => '1.0.0',
+        'capabilities' => ModuleCapabilities::normalize([
+            'requires' => ['identity.contracts'],
+        ]),
+    ]);
+
+    expect($registry->missingRequirements('inengine/user'))->toBe([]);
 });
 
 it('queries providers and drivers from persisted capabilities', function () {

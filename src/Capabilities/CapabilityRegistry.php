@@ -121,15 +121,23 @@ final class CapabilityRegistry
         $out = [];
 
         foreach ($this->store->all() as $package => $state) {
-            if ($enabledOnly && $state['enabled'] !== true) {
-                continue;
-            }
-
             if (! array_key_exists('capabilities', $state)) {
                 continue;
             }
 
-            $out[$package] = ModuleCapabilities::normalize($state['capabilities']);
+            $capabilities = ModuleCapabilities::normalize($state['capabilities']);
+
+            // Library modules (ports/tokens) always contribute when registered,
+            // even if Modulus has not flipped their enabled flag.
+            if (
+                $enabledOnly
+                && $state['enabled'] !== true
+                && $capabilities['kind'] !== ModuleCapabilities::KIND_LIBRARY
+            ) {
+                continue;
+            }
+
+            $out[$package] = $capabilities;
         }
 
         return $out;

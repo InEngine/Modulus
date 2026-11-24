@@ -19,7 +19,8 @@ namespace InEngine\Modulus\Contracts;
  *     drivers: DriverMap,
  *     binds: CapabilityList,
  *     label: string|null,
- *     description: string|null
+ *     description: string|null,
+ *     kind: string
  * }
  * @phpstan-type ModuleState array{enabled: bool, version: string|null, capabilities?: ModuleCapabilitiesShape}
  */
